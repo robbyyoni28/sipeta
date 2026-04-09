@@ -562,6 +562,9 @@
                         <a href="<?= base_url('sekretariat/input_pemenang') ?>"><i class="far fa-star mr-2"></i><span class="menu-text">PEMENANG TENDER</span></a>
                     </li>
                 <?php else: ?>
+                    <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
+                        <a href="<?= base_url('sekretariat/input_pemenang') ?>"><i class="far fa-star mr-2"></i><span class="menu-text">PEMENANG TENDER</span></a>
+                    </li>
                     <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i><span class="menu-text">PERSONEL LAPANGAN</span></a>
                     </li>
@@ -577,9 +580,7 @@
                     <li class="<?= $this->uri->segment(2) == 'data_tender' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/data_tender') ?>"><i class="fas fa-file-contract mr-2"></i><span class="menu-text">DATA TENDER</span></a>
                     </li>
-                    <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
-                        <a href="<?= base_url('sekretariat/input_pemenang') ?>"><i class="far fa-star mr-2"></i><span class="menu-text">PEMENANG TENDER</span></a>
-                    </li>
+
                     <li class="<?= $this->uri->segment(2) == '' || $this->uri->segment(2) == 'daftar_perusahaan' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat') ?>"><i class="fas fa-address-card mr-2"></i><span class="menu-text">DATA PERUSAHAAN</span></a>
                     </li>

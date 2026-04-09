@@ -469,6 +469,9 @@
             </div>
 
             <ul class="list-unstyled components mt-3">
+                <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
+                    <a href="<?= base_url('pokja/input_pemenang') ?>"><i class="far fa-star mr-2"></i> PEMENANG TENDER</a>
+                </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
                     <a href="<?= base_url('pokja/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i> PERSONEL LAPANGAN</a>
                 </li>
@@ -484,9 +487,7 @@
                 <li class="<?= $this->uri->segment(2) == 'data_tender' ? 'active' : '' ?>">
                     <a href="<?= base_url('pokja/data_tender') ?>"><i class="fas fa-file-contract mr-2"></i> DATA TENDER</a>
                 </li>
-                <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/input_pemenang') ?>"><i class="far fa-star mr-2"></i> PEMENANG TENDER</a>
-                </li>
+
                 <li class="<?= $this->uri->segment(2) == 'daftar_perusahaan' || $this->uri->segment(2) == 'manage' ? 'active' : '' ?>">
                     <a href="<?= base_url('pokja/daftar_perusahaan') ?>"><i class="fas fa-address-card mr-2"></i> DATA PERUSAHAAN</a>
                 </li>
