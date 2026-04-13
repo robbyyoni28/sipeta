@@ -1,6 +1,6 @@
 <?php $module = $this->uri->segment(1); ?>
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-edit mr-2"></i>Recording Paket Pemenang Tender</h1>
+    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-edit mr-2"></i>Recording Paket Pemenang Tender <?= isset($jenis_tender) && $jenis_tender == 'konsultansi' ? 'Konsultansi' : '' ?></h1>
     <a href="<?= base_url($module.'/input_pemenang') ?>" class="btn btn-sm btn-secondary shadow-sm">
         <i class="fas fa-home fa-sm"></i> Dashboard
     </a>
@@ -26,6 +26,9 @@
 
 <form action="<?= base_url($module.'/simpan_pemenang') ?>" method="POST" id="form-pemenang">
     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
+    <?php if(isset($jenis_tender) && $jenis_tender == 'konsultansi'): ?>
+        <input type="hidden" name="jenis_tender" value="konsultansi">
+    <?php endif; ?>
     
 <!-- 1. Informasi Paket -->
     <div class="card shadow mb-4 border-0 overflow-hidden">
@@ -193,8 +196,9 @@
         </div>
     </div>
 
+    <?php if(!isset($jenis_tender) || $jenis_tender !== 'konsultansi'): ?>
     <!-- 3. Peralatan -->
-    <div class="card shadow mb-4 border-0 overflow-hidden">
+    <div class="card shadow mb-4 border-0 overflow-hidden" id="section-peralatan">
         <div class="card-header py-3 bg-gradient-success text-white border-0 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold"><i class="fas fa-tools mr-2"></i>3. Data Peralatan Utama</h6>
             <button type="button" id="btn-add-peralatan" class="btn btn-light btn-sm font-weight-bold rounded-pill">
@@ -265,6 +269,7 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <div class="text-center mb-5 mt-5">
         <button type="submit" class="btn btn-primary btn-lg shadow-lg px-5 border-0 rounded-pill" style="background: linear-gradient(to right, #4361ee, #3f37c9); padding: 15px 50px; font-weight: 800; letter-spacing: 1px;">
@@ -368,9 +373,15 @@ $(document).ready(function() {
     $('#btn-add-peralatan').on('click', function() {
         const $last = $('#table-peralatan tbody tr:last');
         const $clone = $last.clone();
+        // Kosongkan SEMUA field input & select di baris baru
         $clone.find('input').val('');
+        $clone.find('select').prop('selectedIndex', 0);
         $clone.find('.qty-peralatan').val(1);
-        $clone.find('.feedback-plat-inline').empty();
+        $clone.find('.feedback-plat-inline, .feedback-skk-inline, .feedback-nik-inline').html('');
+        $clone.find('.is-valid, .border-warning').removeClass('is-valid border-warning');
+        $clone.find('.badge-warning').remove();
+        $clone.css('border-left', '');
+        // Hanya sisakan unit pertama, hapus duplikat unit lainnya
         $clone.find('.peralatan-units .unit-item').slice(1).remove();
         $('#table-peralatan tbody').append($clone);
         reindexPeralatan();

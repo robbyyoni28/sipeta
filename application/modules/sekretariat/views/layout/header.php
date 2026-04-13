@@ -561,9 +561,15 @@
                     <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/input_pemenang') ?>"><i class="far fa-star mr-2"></i><span class="menu-text">PEMENANG TENDER</span></a>
                     </li>
+                    <li class="<?= $this->uri->segment(2) == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
+                        <a href="<?= base_url('sekretariat/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i><span class="menu-text">TENDER KONSULTANSI</span></a>
+                    </li>
                 <?php else: ?>
                     <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/input_pemenang') ?>"><i class="far fa-star mr-2"></i><span class="menu-text">PEMENANG TENDER</span></a>
+                    </li>
+                    <li class="<?= $this->uri->segment(2) == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
+                        <a href="<?= base_url('sekretariat/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i><span class="menu-text">TENDER KONSULTANSI</span></a>
                     </li>
                     <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i><span class="menu-text">PERSONEL LAPANGAN</span></a>
@@ -607,7 +613,29 @@
                     </div>
                     <div class="ml-auto d-flex align-items-center">
                         <span class="mr-3 font-weight-bold text-muted small">Operator: <?= $this->session->userdata('username') ?></span>
-                        <img src="https://ui-avatars.com/api/?name=<?= $this->session->userdata('username') ?>&background=6c5ce7&color=fff" class="rounded-circle" width="35">
+                        <div class="dropdown ml-3">
+                            <?php 
+                                $username_safe = $this->session->userdata('username');
+                                $profil_foto = $this->db->get_where('users', ['username' => $username_safe])->row('foto');
+                                if (!empty($profil_foto) && $profil_foto != 'default.png') {
+                                    $ava_url = base_url('assets/img/profile/' . $profil_foto);
+                                } else {
+                                    $ava_url = "https://ui-avatars.com/api/?name=" . urlencode($username_safe) . "&background=6c5ce7&color=fff";
+                                }
+                            ?>
+                            <a class="nav-link dropdown-toggle p-0" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img src="<?= $ava_url ?>" class="rounded-circle shadow-sm" width="35" style="object-fit: cover; height: 35px; border: 2px solid #fff;">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in mt-2" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="<?= base_url('sekretariat/edit_profil') ?>">
+                                    <i class="fas fa-user-edit fa-sm fa-fw mr-2 text-primary"></i> Edit Profil
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="<?= base_url('auth/logout') ?>" style="color: #e74a3b;">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-danger"></i> Logout
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </nav>

@@ -179,15 +179,20 @@ $(document).ready(function() {
                             <i class="fas fa-search mr-1"></i> DETAIL
                         </a>`;
                     
+                    let btnEdit = '';
                     let btnDelete = '';
                     if ("<?= $this->session->userdata('role') ?>" === "admin" && "<?= $module ?>" === "admin") {
+                        btnEdit = `
+                            <a href="<?= base_url('admin/edit_tender/') ?>${data}" class="btn btn-sm btn-outline-primary mr-1" style="border-radius: 12px; font-weight: 700;" title="Edit Tender">
+                                <i class="fas fa-pen"></i>
+                            </a>`;
                         btnDelete = `
-                            <button class="btn btn-sm btn-outline-danger btn-delete-tender" data-id="${data}" style="border-radius: 12px; font-weight: 700;">
+                            <button class="btn btn-sm btn-outline-danger btn-delete-tender" data-id="${data}" style="border-radius: 12px; font-weight: 700;" title="Hapus Tender">
                                 <i class="fas fa-trash"></i>
                             </button>`;
                     }
                     
-                    return `<div class="d-flex justify-content-center">${btnDetail}${btnDelete}</div>`;
+                    return `<div class="d-flex justify-content-center">${btnDetail}${btnEdit}${btnDelete}</div>`;
                 }
             }
         ]

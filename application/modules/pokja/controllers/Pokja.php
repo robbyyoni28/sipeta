@@ -224,6 +224,88 @@ class Pokja extends MX_Controller {
         $this->load->view('layout/footer');
     }
 
+    public function input_pemenang_konsultansi() {
+        $this->load->view('layout/header');
+        $data['jenis_tender'] = 'konsultansi';
+        // Note: Gunakan duplicate/copy dari input_pemenang, tapi hapus elemen HTML Form Peralatan
+        $this->load->view('sekretariat/input_pemenang', $data);
+        $this->load->view('layout/footer');
+    }
+
+    public function edit_profil() {
+        $username = $this->session->userdata('username');
+        $user_data = $this->db->get_where('users', ['username' => $username])->row_array();
+        $data['user'] = $user_data;
+
+        if ($this->input->post()) {
+            $update_data = [];
+
+            // Update nama hanya jika diisi
+            $nama = $this->input->post('nama', TRUE);
+            if (!empty(trim($nama))) {
+                $update_data['nama'] = html_escape($nama);
+            }
+
+            // 1. Eksekusi Password Checking
+            if (!empty($this->input->post('password_lama'))) {
+                $pass_lama = $this->input->post('password_lama');
+                $pass_baru = $this->input->post('password_baru');
+
+                if (password_verify($pass_lama, $user_data['password'])) {
+                    $update_data['password'] = password_hash($pass_baru, PASSWORD_BCRYPT);
+                } else {
+                    $this->session->set_flashdata('error', 'Gagal: Password lama salah!');
+                    redirect('pokja/edit_profil');
+                    return;
+                }
+            }
+
+            // 2. Eksekusi Upload Foto CI3
+            if (!empty($_FILES['foto']['name'])) {
+                $upload_path = realpath(APPPATH . '../assets/img/profile') . DIRECTORY_SEPARATOR;
+                if (!is_dir($upload_path)) {
+                    mkdir($upload_path, 0777, true);
+                }
+
+                $config['upload_path']   = $upload_path;
+                $config['allowed_types'] = 'gif|jpg|jpeg|png';
+                $config['max_size']      = 2048; 
+                $config['encrypt_name']  = TRUE; 
+
+                $this->load->library('upload', $config);
+
+                if ($this->upload->do_upload('foto')) {
+                    $old_file = $user_data['foto'] ?? '';
+                    if ($old_file && $old_file != 'default.png' && file_exists($upload_path . $old_file)) {
+                        unlink($upload_path . $old_file);
+                    }
+                    $update_data['foto'] = $this->upload->data('file_name');
+                } else {
+                    $this->session->set_flashdata('error', $this->upload->display_errors('', ''));
+                    redirect('pokja/edit_profil');
+                    return;
+                }
+            }
+
+            if (empty($update_data)) {
+                $this->session->set_flashdata('error', 'Tidak ada perubahan yang disimpan.');
+                redirect('pokja/edit_profil');
+                return;
+            }
+
+            // 3. Proses Ke DB
+            $this->db->where('username', $username)->update('users', $update_data);
+            
+            $this->session->set_flashdata('success', 'Profil Berhasil diubah');
+            redirect('pokja/edit_profil');
+            return;
+        }
+
+        $this->load->view('layout/header');
+        $this->load->view('pokja/edit_profil', $data);
+        $this->load->view('layout/footer');
+    }
+
     public function get_resource_history() {
         $id = $this->input->get('id');
         $type = $this->input->get('type');
@@ -262,9 +344,8 @@ class Pokja extends MX_Controller {
     }
 
     public function simpan_pemenang() {
-        $personel_lapangan = $this->input->post('personel_lapangan');
-        $personel_k3 = $this->input->post('personel_k3');
-        $peralatan = $this->input->post('peralatan');
+        $jenis_tender = $this->input->post('jenis_tender');
+        $hps_input = $this->input->post('hps');
 
         $tender_data = [
             'nama_penyedia' => $this->input->post('nama_penyedia'),
@@ -273,21 +354,55 @@ class Pokja extends MX_Controller {
             'judul_paket' => $this->input->post('judul_paket'),
             'nama_pokmil' => $this->input->post('nama_pokmil'),
             'tanggal_bahp' => $this->input->post('tanggal_bahp'),
-            'hps' => str_replace(',', '.', str_replace('.', '', $this->input->post('hps'))),
+            'hps' => str_replace(',', '.', str_replace('.', '', $hps_input)),
             'kualifikasi' => $this->input->post('kualifikasi'),
-            'tahun_anggaran' => $this->input->post('tahun_anggaran') ? $this->input->post('tahun_anggaran') : date('Y'),
-            // Manajer & Ahli K3 (mengikuti struktur di Sekretariat)
-            'manajer_proyek' => $personel_lapangan[0]['nama'] ?? null,
-            'nik_manajer_proyek' => $personel_lapangan[0]['nik'] ?? null,
-            'manajer_teknik' => $personel_lapangan[1]['nama'] ?? null,
-            'nik_manajer_teknik' => $personel_lapangan[1]['nik'] ?? null,
-            'manajer_keuangan' => $personel_lapangan[2]['nama'] ?? null,
-            'nik_manajer_keuangan' => $personel_lapangan[2]['nik'] ?? null,
-            'ahli_k3' => $personel_k3[0]['nama'] ?? null,
-            'nik_ahli_k3' => $personel_k3[0]['nik'] ?? null
+            'tahun_anggaran' => $this->input->post('tahun_anggaran') ? $this->input->post('tahun_anggaran') : date('Y')
         ];
 
-        // Duplicate check overhaul
+        // Looping Bersih Personel Lapangan
+        $personel_lapangan = [];
+        $raw_lapangan = $this->input->post('personel_lapangan');
+        if (!empty($raw_lapangan) && is_array($raw_lapangan)) {
+            foreach ($raw_lapangan as $p) {
+                if (!empty(trim($p['nama'])) && !empty(trim($p['nik']))) {
+                    $personel_lapangan[] = $p;
+                }
+            }
+        }
+
+        // Looping Bersih Personel K3
+        $personel_k3 = [];
+        $raw_k3 = $this->input->post('personel_k3');
+        if (!empty($raw_k3) && is_array($raw_k3)) {
+            foreach ($raw_k3 as $pk) {
+                if (!empty(trim($pk['nama'])) && !empty(trim($pk['nik']))) {
+                    $personel_k3[] = $pk;
+                }
+            }
+        }
+
+        // Looping Bersih Peralatan
+        $peralatan = [];
+        if ($jenis_tender !== 'konsultansi') {
+            $raw_alat = $this->input->post('peralatan');
+            if (!empty($raw_alat) && is_array($raw_alat)) {
+                foreach ($raw_alat as $alat) {
+                    if (!empty(trim($alat['jenis_alat'] ?? ''))) {
+                        $peralatan[] = $alat;
+                    }
+                }
+            }
+        }
+
+        $tender_data['manajer_proyek'] = $personel_lapangan[0]['nama'] ?? null;
+        $tender_data['nik_manajer_proyek'] = $personel_lapangan[0]['nik'] ?? null;
+        $tender_data['manajer_teknik'] = $personel_lapangan[1]['nama'] ?? null;
+        $tender_data['nik_manajer_teknik'] = $personel_lapangan[1]['nik'] ?? null;
+        $tender_data['manajer_keuangan'] = $personel_lapangan[2]['nama'] ?? null;
+        $tender_data['nik_manajer_keuangan'] = $personel_lapangan[2]['nik'] ?? null;
+        $tender_data['ahli_k3'] = $personel_k3[0]['nama'] ?? null;
+        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik'] ?? null;
+
         $force_save = $this->input->post('force_save') === '1';
         if (!$force_save) {
             $duplicates = $this->_get_bulk_duplicates_internal($personel_lapangan, $personel_k3, $peralatan, $tender_data['kode_tender'], $tender_data['tahun_anggaran']);
@@ -456,26 +571,29 @@ class Pokja extends MX_Controller {
         // 3. Check Peralatan
         if (!empty($peralatan)) {
             foreach ($peralatan as $al) {
-                $plat = trim((string)($al['plat'] ?? ($al['plat_serial'] ?? '')));
-                if ($plat === '') continue;
+                $units = $al['units'] ?? [$al];
+                foreach ($units as $u) {
+                    $plat = trim((string)($u['plat'] ?? ($u['plat_serial'] ?? '')));
+                    if ($plat === '') continue;
 
-                $sql = "SELECT alt.plat_serial as plat, alt.*, t.kode_tender, t.judul_paket, t.tahun_anggaran, p.nama_perusahaan 
-                        FROM tender_peralatan ta
-                        JOIN peralatan alt ON alt.id = ta.peralatan_id
-                        JOIN tender t ON t.id = ta.tender_id
-                        JOIN penyedia p ON p.id = t.penyedia_id
-                        WHERE t.tahun_anggaran = ? AND TRIM(alt.plat_serial) = ? ";
-                $params = [$tahun, $plat];
+                    $sql = "SELECT alt.plat_serial as plat, alt.*, t.kode_tender, t.judul_paket, t.tahun_anggaran, p.nama_perusahaan 
+                            FROM tender_peralatan ta
+                            JOIN peralatan alt ON alt.id = ta.peralatan_id
+                            JOIN tender t ON t.id = ta.tender_id
+                            JOIN penyedia p ON p.id = t.penyedia_id
+                            WHERE t.tahun_anggaran = ? AND TRIM(alt.plat_serial) = ? ";
+                    $params = [$tahun, $plat];
 
-                if ($kode_tender !== '') {
-                    $sql .= " AND t.kode_tender != ? ";
-                    $params[] = $kode_tender;
-                }
-                $sql .= " LIMIT 1";
+                    if ($kode_tender !== '') {
+                        $sql .= " AND t.kode_tender != ? ";
+                        $params[] = $kode_tender;
+                    }
+                    $sql .= " LIMIT 1";
 
-                $res = $this->db->query($sql, $params)->row();
-                if ($res) {
-                    $duplicates[] = ['type' => 'Peralatan', 'identifier' => $plat, 'detail' => $res];
+                    $res = $this->db->query($sql, $params)->row();
+                    if ($res) {
+                        $duplicates[] = ['type' => 'Peralatan', 'identifier' => $plat, 'detail' => $res];
+                    }
                 }
             }
         }
