@@ -32,8 +32,8 @@ class Pokja extends MX_Controller {
     }
 
     public function detail($tender_id) {
-        $this->load->model('admin/m_tender');
-        $detail = $this->m_tender->get_detail_tender($tender_id);
+        $this->load->model('admin/M_Tender');
+        $detail = $this->M_Tender->get_detail_tender($tender_id);
         
         if (!$detail) {
             $this->session->set_flashdata('error', 'Data tidak ditemukan!');
@@ -673,9 +673,9 @@ class Pokja extends MX_Controller {
     }
 
     public function manajer_teknik() {
-        $this->load->model('admin/m_tender');
+        $this->load->model('admin/M_Tender');
         $penyedia_id = $this->input->get('penyedia_id');
-        $data['manajer_list'] = $this->m_tender->get_all_manajer_teknik($penyedia_id);
+        $data['manajer_list'] = $this->M_Tender->get_all_manajer_teknik($penyedia_id);
         $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
         $data['selected_penyedia'] = $penyedia_id;
         $this->load->view('layout/header');
@@ -743,9 +743,9 @@ class Pokja extends MX_Controller {
     }
 
     public function manajer_keuangan() {
-        $this->load->model('admin/m_tender');
+        $this->load->model('admin/M_Tender');
         $penyedia_id = $this->input->get('penyedia_id');
-        $data['manajer_list'] = $this->m_tender->get_all_manajer_keuangan($penyedia_id);
+        $data['manajer_list'] = $this->M_Tender->get_all_manajer_keuangan($penyedia_id);
         $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
         $data['selected_penyedia'] = $penyedia_id;
         $this->load->view('layout/header');
