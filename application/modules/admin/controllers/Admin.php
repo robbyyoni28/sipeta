@@ -728,7 +728,7 @@ class Admin extends MX_Controller {
     }
 
     public function manajer_teknik() {
-        $this->load->model('admin/M_Tender');
+        $this->load->model('M_Tender');
         $this->load->model('sekretariat/Sekretariat_model');
         $penyedia_id = $this->input->get('penyedia_id');
         $data['manajer_list'] = $this->M_Tender->get_all_manajer_teknik($penyedia_id);
@@ -799,7 +799,7 @@ class Admin extends MX_Controller {
     }
 
     public function manajer_keuangan() {
-        $this->load->model('admin/M_Tender');
+        $this->load->model('M_Tender');
         $this->load->model('sekretariat/Sekretariat_model');
         $penyedia_id = $this->input->get('penyedia_id');
         $data['manajer_list'] = $this->M_Tender->get_all_manajer_keuangan($penyedia_id);
