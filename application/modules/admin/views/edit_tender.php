@@ -102,107 +102,16 @@
         </div>
     </div>
 
-    <!-- 2. Manajer / Personel Kunci -->
+    <!-- 2. Personel Kunci (Manajer Proyek & K3) -->
     <div class="card shadow mb-4 border-0 overflow-hidden">
         <div class="card-header py-3 border-0" style="background: linear-gradient(135deg, #7209b7 0%, #560bad 100%);">
-            <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-users mr-2"></i>2. Personel Kunci (Manajer)</h6>
+            <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-users mr-2"></i>2. Personel Utama (MP & K3)</h6>
         </div>
         <div class="card-body p-4">
-            <!-- 2a. Manajer Teknik -->
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px; background: linear-gradient(135deg, #e0fbfc, #fff);">
-                <div class="card-body">
-                    <h6 class="font-weight-bold text-info text-uppercase mb-3"><i class="fas fa-cogs mr-2"></i>Data Manajer Teknik</h6>
-                    <div class="row">
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Nama Lengkap</label>
-                            <input type="text" name="manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_teknik) ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">NIK</label>
-                            <input type="text" name="nik_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->nik_manajer_teknik) ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Jenis SKK/Sertifikat</label>
-                            <input type="text" name="jenis_skk_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->jenis_skk) ? html_escape($manajer_teknik->jenis_skk) : '' ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Nomor SKK/Sertifikat</label>
-                            <input type="text" name="nomor_skk_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->nomor_skk) ? html_escape($manajer_teknik->nomor_skk) : '' ?>" style="border-radius: 8px;">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Masa Berlaku SKK</label>
-                            <input type="text" name="masa_berlaku_skk_manajer_teknik" class="form-control form-control-sm bg-light border-0 datepicker" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->masa_berlaku_skk) ? date('d/m/Y', strtotime($manajer_teknik->masa_berlaku_skk)) : '' ?>" placeholder="dd/mm/yyyy" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label class="small text-muted">File KTP (JPG/PNG/PDF)</label>
-                            <input type="file" name="file_ktp_manajer_teknik" class="form-control-file form-control-sm">
-                            <?php if(isset($manajer_teknik) && !empty($manajer_teknik->file_ktp)): ?>
-                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_teknik->file_ktp) ?>" target="_blank">Lihat KTP Saat Ini</a></small>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-5 form-group">
-                            <label class="small text-muted">File SKK (JPG/PNG/PDF)</label>
-                            <input type="file" name="file_skk_manajer_teknik" class="form-control-file form-control-sm">
-                            <?php if(isset($manajer_teknik) && !empty($manajer_teknik->file_skk)): ?>
-                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_teknik->file_skk) ?>" target="_blank">Lihat SKK Saat Ini</a></small>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2b. Manajer Keuangan -->
-            <div class="card border-0 shadow-sm mb-4 row-mk" style="border-radius: 14px; background: linear-gradient(135deg, #fff0f3, #fff);">
-                <div class="card-body">
-                    <h6 class="font-weight-bold text-danger text-uppercase mb-3"><i class="fas fa-wallet mr-2"></i>Data Manajer Keuangan</h6>
-                    <div class="row">
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Nama Lengkap</label>
-                            <input type="text" name="manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_keuangan) ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">NIK</label>
-                            <input type="text" name="nik_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->nik_manajer_keuangan) ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Jenis SKK/Sertifikat</label>
-                            <input type="text" name="jenis_skk_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->jenis_skk) ? html_escape($manajer_keuangan->jenis_skk) : '' ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Nomor SKK/Sertifikat</label>
-                            <input type="text" name="nomor_skk_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->nomor_skk) ? html_escape($manajer_keuangan->nomor_skk) : '' ?>" style="border-radius: 8px;">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3 form-group">
-                            <label class="small text-muted">Masa Berlaku SKK</label>
-                            <input type="text" name="masa_berlaku_skk_manajer_keuangan" class="form-control form-control-sm bg-light border-0 datepicker" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->masa_berlaku_skk) ? date('d/m/Y', strtotime($manajer_keuangan->masa_berlaku_skk)) : '' ?>" placeholder="dd/mm/yyyy" style="border-radius: 8px;">
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label class="small text-muted">File KTP (JPG/PNG/PDF)</label>
-                            <input type="file" name="file_ktp_manajer_keuangan" class="form-control-file form-control-sm">
-                            <?php if(isset($manajer_keuangan) && !empty($manajer_keuangan->file_ktp)): ?>
-                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_keuangan->file_ktp) ?>" target="_blank">Lihat KTP Saat Ini</a></small>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-5 form-group">
-                            <label class="small text-muted">File SKK (JPG/PNG/PDF)</label>
-                            <input type="file" name="file_skk_manajer_keuangan" class="form-control-file form-control-sm">
-                            <?php if(isset($manajer_keuangan) && !empty($manajer_keuangan->file_skk)): ?>
-                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_keuangan->file_skk) ?>" target="_blank">Lihat SKK Saat Ini</a></small>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2c. Manajer Proyek (Bila Ada) & Ahli K3 -->
             <div class="row">
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #f0f4ff, #fff);">
-                        <h6 class="font-weight-bold text-primary small text-uppercase mb-3"><i class="fas fa-user-tie mr-2"></i>Manajer Proyek</h6>
+                        <h6 class="font-weight-bold text-primary small text-uppercase mb-3"><i class="fas fa-user-tie mr-2"></i>Manajer Proyek / Pelaksana</h6>
                         <div class="form-group mb-2">
                             <label class="small text-muted">Nama Lengkap</label>
                             <input type="text" name="manajer_proyek" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_proyek) ?>" style="border-radius: 8px;">
@@ -215,7 +124,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #fff);">
-                        <h6 class="font-weight-bold text-warning small text-uppercase mb-3"><i class="fas fa-briefcase-medical mr-2"></i>Ahli K3</h6>
+                        <h6 class="font-weight-bold text-warning small text-uppercase mb-3"><i class="fas fa-briefcase-medical mr-2"></i>Ahli K3 Konstruksi</h6>
                         <div class="form-group mb-2">
                             <label class="small text-muted">Nama Lengkap</label>
                             <input type="text" name="ahli_k3" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->ahli_k3) ?>" style="border-radius: 8px;">
@@ -249,6 +158,16 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" id="teknik-tab" data-toggle="tab" href="#teknik" role="tab">
+                        <i class="fas fa-cogs mr-2"></i>Manajer Teknik
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="keuangan-tab" data-toggle="tab" href="#keuangan" role="tab">
+                        <i class="fas fa-wallet mr-2"></i>Manajer Keuangan
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" id="peralatan-tab" data-toggle="tab" href="#peralatan" role="tab">
                         <i class="fas fa-tools mr-2"></i>Peralatan
                     </a>
@@ -257,6 +176,100 @@
 
             <!-- Tab Content -->
             <div class="tab-content" id="personelTabContent">
+                <!-- Manajer Teknik Tab -->
+                <div class="tab-pane fade" id="teknik" role="tabpanel">
+                    <div class="card border-0 shadow-none mt-3">
+                        <div class="card-body p-0">
+                            <h6 class="font-weight-bold text-info text-uppercase mb-3 small"><i class="fas fa-cogs mr-2"></i>Detail Manajer Teknik</h6>
+                            <div class="row">
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Nama Lengkap</label>
+                                    <input type="text" name="manajer_teknik" class="form-control form-control-sm" value="<?= html_escape($t->manajer_teknik) ?>">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">NIK</label>
+                                    <input type="text" name="nik_manajer_teknik" class="form-control form-control-sm" value="<?= html_escape($t->nik_manajer_teknik) ?>">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Jenis SKK</label>
+                                    <input type="text" name="jenis_skk_manajer_teknik" class="form-control form-control-sm" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->jenis_skk) ? html_escape($manajer_teknik->jenis_skk) : '' ?>">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Nomor SKK</label>
+                                    <input type="text" name="nomor_skk_manajer_teknik" class="form-control form-control-sm" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->nomor_skk) ? html_escape($manajer_teknik->nomor_skk) : '' ?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Masa Berlaku SKK</label>
+                                    <input type="text" name="masa_berlaku_skk_manajer_teknik" class="form-control form-control-sm datepicker" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->masa_berlaku_skk) ? date('d/m/Y', strtotime($manajer_teknik->masa_berlaku_skk)) : '' ?>" placeholder="dd/mm/yyyy">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                    <label class="small text-muted">Update KTP (JPG/PNG/PDF)</label>
+                                    <input type="file" name="file_ktp_manajer_teknik" class="form-control-file form-control-sm">
+                                    <?php if(isset($manajer_teknik) && !empty($manajer_teknik->file_ktp)): ?>
+                                        <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_teknik->file_ktp) ?>" target="_blank">Lihat File KTP</a></small>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="col-md-5 form-group">
+                                    <label class="small text-muted">Update SKK (JPG/PNG/PDF)</label>
+                                    <input type="file" name="file_skk_manajer_teknik" class="form-control-file form-control-sm">
+                                    <?php if(isset($manajer_teknik) && !empty($manajer_teknik->file_skk)): ?>
+                                        <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_teknik->file_skk) ?>" target="_blank">Lihat File SKK</a></small>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manajer Keuangan Tab -->
+                <div class="tab-pane fade" id="keuangan" role="tabpanel">
+                    <div class="card border-0 shadow-none mt-3">
+                        <div class="card-body p-0">
+                            <h6 class="font-weight-bold text-danger text-uppercase mb-3 small"><i class="fas fa-wallet mr-2"></i>Detail Manajer Keuangan</h6>
+                            <div class="row">
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Nama Lengkap</label>
+                                    <input type="text" name="manajer_keuangan" class="form-control form-control-sm" value="<?= html_escape($t->manajer_keuangan) ?>">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">NIK</label>
+                                    <input type="text" name="nik_manajer_keuangan" class="form-control form-control-sm" value="<?= html_escape($t->nik_manajer_keuangan) ?>">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Jenis Sertifikat</label>
+                                    <input type="text" name="jenis_skk_manajer_keuangan" class="form-control form-control-sm" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->jenis_skk) ? html_escape($manajer_keuangan->jenis_skk) : '' ?>">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Nomor Sertifikat</label>
+                                    <input type="text" name="nomor_skk_manajer_keuangan" class="form-control form-control-sm" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->nomor_skk) ? html_escape($manajer_keuangan->nomor_skk) : '' ?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 form-group">
+                                    <label class="small text-muted">Masa Berlaku Sertifikat</label>
+                                    <input type="text" name="masa_berlaku_skk_manajer_keuangan" class="form-control form-control-sm datepicker" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->masa_berlaku_skk) ? date('d/m/Y', strtotime($manajer_keuangan->masa_berlaku_skk)) : '' ?>" placeholder="dd/mm/yyyy">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                    <label class="small text-muted">Update KTP (JPG/PNG/PDF)</label>
+                                    <input type="file" name="file_ktp_manajer_keuangan" class="form-control-file form-control-sm">
+                                    <?php if(isset($manajer_keuangan) && !empty($manajer_keuangan->file_ktp)): ?>
+                                        <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_keuangan->file_ktp) ?>" target="_blank">Lihat File KTP</a></small>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="col-md-5 form-group">
+                                    <label class="small text-muted">Update Sertifikat (JPG/PNG/PDF)</label>
+                                    <input type="file" name="file_skk_manajer_keuangan" class="form-control-file form-control-sm">
+                                    <?php if(isset($manajer_keuangan) && !empty($manajer_keuangan->file_skk)): ?>
+                                        <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_keuangan->file_skk) ?>" target="_blank">Lihat File Sertifikat</a></small>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Personel Lapangan Tab -->
                 <div class="tab-pane fade show active" id="lapangan" role="tabpanel">
                     <div class="table-responsive mt-3">

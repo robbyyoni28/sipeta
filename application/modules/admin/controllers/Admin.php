@@ -100,7 +100,7 @@ class Admin extends MX_Controller {
     }
 
     public function detail($tender_id) {
-        $this->load->model('admin/M_Tender');
+        $this->load->model('M_Tender');
         $detail = $this->M_Tender->get_detail_tender($tender_id);
         
         if (!$detail) {
@@ -137,7 +137,7 @@ class Admin extends MX_Controller {
     }
 
     public function edit_tender($id) {
-        $this->load->model('admin/M_Tender');
+        $this->load->model('M_Tender');
         $detail = $this->M_Tender->get_detail_tender($id);
 
         if (!$detail || !$detail['tender']) {
