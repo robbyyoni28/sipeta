@@ -25,7 +25,7 @@
 <?php echo form_error('kode_tender', '<div class="alert alert-danger">', '</div>'); ?>
 <?php echo form_error('tahun_anggaran', '<div class="alert alert-danger">', '</div>'); ?>
 
-<form action="<?= base_url('admin/update_tender/'.$t->id) ?>" method="POST" id="form-edit-tender">
+<form action="<?= base_url('admin/update_tender/'.$t->id) ?>" method="POST" id="form-edit-tender" enctype="multipart/form-data">
     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
 
     <!-- 1. Informasi Paket -->
@@ -108,8 +108,99 @@
             <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-users mr-2"></i>2. Personel Kunci (Manajer)</h6>
         </div>
         <div class="card-body p-4">
+            <!-- 2a. Manajer Teknik -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px; background: linear-gradient(135deg, #e0fbfc, #fff);">
+                <div class="card-body">
+                    <h6 class="font-weight-bold text-info text-uppercase mb-3"><i class="fas fa-cogs mr-2"></i>Data Manajer Teknik</h6>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Nama Lengkap</label>
+                            <input type="text" name="manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_teknik) ?>" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">NIK</label>
+                            <input type="text" name="nik_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->nik_manajer_teknik) ?>" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Jenis SKK/Sertifikat</label>
+                            <input type="text" name="jenis_skk_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->jenis_skk) ? html_escape($manajer_teknik->jenis_skk) : '' ?>" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Nomor SKK/Sertifikat</label>
+                            <input type="text" name="nomor_skk_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->nomor_skk) ? html_escape($manajer_teknik->nomor_skk) : '' ?>" style="border-radius: 8px;">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Masa Berlaku SKK</label>
+                            <input type="text" name="masa_berlaku_skk_manajer_teknik" class="form-control form-control-sm bg-light border-0 datepicker" value="<?= isset($manajer_teknik) && !empty($manajer_teknik->masa_berlaku_skk) ? date('d/m/Y', strtotime($manajer_teknik->masa_berlaku_skk)) : '' ?>" placeholder="dd/mm/yyyy" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small text-muted">File KTP (JPG/PNG/PDF)</label>
+                            <input type="file" name="file_ktp_manajer_teknik" class="form-control-file form-control-sm">
+                            <?php if(isset($manajer_teknik) && !empty($manajer_teknik->file_ktp)): ?>
+                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_teknik->file_ktp) ?>" target="_blank">Lihat KTP Saat Ini</a></small>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-5 form-group">
+                            <label class="small text-muted">File SKK (JPG/PNG/PDF)</label>
+                            <input type="file" name="file_skk_manajer_teknik" class="form-control-file form-control-sm">
+                            <?php if(isset($manajer_teknik) && !empty($manajer_teknik->file_skk)): ?>
+                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_teknik->file_skk) ?>" target="_blank">Lihat SKK Saat Ini</a></small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2b. Manajer Keuangan -->
+            <div class="card border-0 shadow-sm mb-4 row-mk" style="border-radius: 14px; background: linear-gradient(135deg, #fff0f3, #fff);">
+                <div class="card-body">
+                    <h6 class="font-weight-bold text-danger text-uppercase mb-3"><i class="fas fa-wallet mr-2"></i>Data Manajer Keuangan</h6>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Nama Lengkap</label>
+                            <input type="text" name="manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_keuangan) ?>" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">NIK</label>
+                            <input type="text" name="nik_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->nik_manajer_keuangan) ?>" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Jenis SKK/Sertifikat</label>
+                            <input type="text" name="jenis_skk_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->jenis_skk) ? html_escape($manajer_keuangan->jenis_skk) : '' ?>" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Nomor SKK/Sertifikat</label>
+                            <input type="text" name="nomor_skk_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->nomor_skk) ? html_escape($manajer_keuangan->nomor_skk) : '' ?>" style="border-radius: 8px;">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label class="small text-muted">Masa Berlaku SKK</label>
+                            <input type="text" name="masa_berlaku_skk_manajer_keuangan" class="form-control form-control-sm bg-light border-0 datepicker" value="<?= isset($manajer_keuangan) && !empty($manajer_keuangan->masa_berlaku_skk) ? date('d/m/Y', strtotime($manajer_keuangan->masa_berlaku_skk)) : '' ?>" placeholder="dd/mm/yyyy" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small text-muted">File KTP (JPG/PNG/PDF)</label>
+                            <input type="file" name="file_ktp_manajer_keuangan" class="form-control-file form-control-sm">
+                            <?php if(isset($manajer_keuangan) && !empty($manajer_keuangan->file_ktp)): ?>
+                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_keuangan->file_ktp) ?>" target="_blank">Lihat KTP Saat Ini</a></small>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-5 form-group">
+                            <label class="small text-muted">File SKK (JPG/PNG/PDF)</label>
+                            <input type="file" name="file_skk_manajer_keuangan" class="form-control-file form-control-sm">
+                            <?php if(isset($manajer_keuangan) && !empty($manajer_keuangan->file_skk)): ?>
+                                <small class="text-success"><a href="<?= base_url('uploads/dokumen/'.$manajer_keuangan->file_skk) ?>" target="_blank">Lihat SKK Saat Ini</a></small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2c. Manajer Proyek (Bila Ada) & Ahli K3 -->
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #f0f4ff, #fff);">
                         <h6 class="font-weight-bold text-primary small text-uppercase mb-3"><i class="fas fa-user-tie mr-2"></i>Manajer Proyek</h6>
                         <div class="form-group mb-2">
@@ -122,35 +213,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #f0f4ff, #fff);">
-                        <h6 class="font-weight-bold text-info small text-uppercase mb-3 row-mt"><i class="fas fa-cogs mr-2"></i>Manajer Teknik</h6>
-                        <div class="form-group mb-2">
-                            <label class="small text-muted">Nama Lengkap</label>
-                            <input type="text" name="manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_teknik) ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="form-group mb-0">
-                            <label class="small text-muted">NIK</label>
-                            <input type="text" name="nik_manajer_teknik" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->nik_manajer_teknik) ?>" style="border-radius: 8px;">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #f0f4ff, #fff);">
-                        <h6 class="font-weight-bold text-warning small text-uppercase mb-3 row-mk"><i class="fas fa-wallet mr-2"></i>Manajer Keuangan</h6>
-                        <div class="form-group mb-2">
-                            <label class="small text-muted">Nama Lengkap</label>
-                            <input type="text" name="manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->manajer_keuangan) ?>" style="border-radius: 8px;">
-                        </div>
-                        <div class="form-group mb-0">
-                            <label class="small text-muted">NIK</label>
-                            <input type="text" name="nik_manajer_keuangan" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->nik_manajer_keuangan) ?>" style="border-radius: 8px;">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mt-3">
-                    <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #fff0f3, #fff);">
-                        <h6 class="font-weight-bold text-danger small text-uppercase mb-3"><i class="fas fa-briefcase-medical mr-2"></i>Ahli K3</h6>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm p-3" style="border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #fff);">
+                        <h6 class="font-weight-bold text-warning small text-uppercase mb-3"><i class="fas fa-briefcase-medical mr-2"></i>Ahli K3</h6>
                         <div class="form-group mb-2">
                             <label class="small text-muted">Nama Lengkap</label>
                             <input type="text" name="ahli_k3" class="form-control form-control-sm bg-light border-0" value="<?= html_escape($t->ahli_k3) ?>" style="border-radius: 8px;">
@@ -205,22 +270,24 @@
                                     <th>Jenis SKK</th>
                                     <th>No. SKK</th>
                                     <th>Masa Berlaku SKK</th>
+                                    <th>Masa Berlaku Sertifikat</th>
                                     <th style="width: 80px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="personel-lapangan-tbody">
-                                <?php $no = 1; foreach ($personel_lapangan as $p): ?>
+                                <?php $i = 0; foreach ($personel_lapangan as $p): $i++; ?>
                                 <tr>
-                                    <td><?= $no++ ?></td>
+                                    <td><?= $i ?></td>
                                     <td>
-                                        <input type="hidden" name="personel_lapangan[<?= $no-1 ?>][id]" value="<?= $p->id ?>">
-                                        <input type="text" name="personel_lapangan[<?= $no-1 ?>][nama]" class="form-control form-control-sm" value="<?= html_escape($p->nama) ?>" required>
+                                        <input type="hidden" name="personel_lapangan[<?= $i-1 ?>][id]" value="<?= $p->id ?>">
+                                        <input type="text" name="personel_lapangan[<?= $i-1 ?>][nama]" class="form-control form-control-sm" value="<?= html_escape($p->nama) ?>" required>
                                     </td>
-                                    <td><input type="text" name="personel_lapangan[<?= $no-1 ?>][nik]" class="form-control form-control-sm" value="<?= html_escape($p->nik) ?>" required></td>
-                                    <td><input type="text" name="personel_lapangan[<?= $no-1 ?>][jabatan]" class="form-control form-control-sm" value="<?= html_escape($p->jabatan) ?>"></td>
-                                    <td><input type="text" name="personel_lapangan[<?= $no-1 ?>][jenis_skk]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_skk) ?>"></td>
-                                    <td><input type="text" name="personel_lapangan[<?= $no-1 ?>][nomor_skk]" class="form-control form-control-sm" value="<?= html_escape($p->nomor_skk) ?>"></td>
-                                    <td><input type="date" name="personel_lapangan[<?= $no-1 ?>][masa_berlaku_skk]" class="form-control form-control-sm" value="<?= $p->masa_berlaku_skk ? date('Y-m-d', strtotime($p->masa_berlaku_skk)) : '' ?>"></td>
+                                    <td><input type="text" name="personel_lapangan[<?= $i-1 ?>][nik]" class="form-control form-control-sm" value="<?= html_escape($p->nik) ?>" required></td>
+                                    <td><input type="text" name="personel_lapangan[<?= $i-1 ?>][jabatan]" class="form-control form-control-sm" value="<?= html_escape($p->jabatan) ?>"></td>
+                                    <td><input type="text" name="personel_lapangan[<?= $i-1 ?>][jenis_skk]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_skk) ?>"></td>
+                                    <td><input type="text" name="personel_lapangan[<?= $i-1 ?>][nomor_skk]" class="form-control form-control-sm" value="<?= html_escape($p->nomor_skk) ?>"></td>
+                                    <td><input type="date" name="personel_lapangan[<?= $i-1 ?>][masa_berlaku_skk]" class="form-control form-control-sm" value="<?= $p->masa_berlaku_skk ? date('Y-m-d', strtotime($p->masa_berlaku_skk)) : '' ?>"></td>
+                                    <td><input type="number" name="personel_lapangan[<?= $i-1 ?>][masa_berlaku_skk_sertifikat]" class="form-control form-control-sm" value="<?= html_escape($p->masa_berlaku_skk_sertifikat ?? '') ?>" placeholder="Tahun"></td>
                                     <td><button type="button" class="btn btn-sm btn-danger remove-personel-lapangan"><i class="fas fa-trash"></i></button></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -249,18 +316,18 @@
                                 </tr>
                             </thead>
                             <tbody id="personel-k3-tbody">
-                                <?php $no = 1; foreach ($personel_k3 as $p): ?>
+                                <?php $i = 0; foreach ($personel_k3 as $p): $i++; ?>
                                 <tr>
-                                    <td><?= $no++ ?></td>
+                                    <td><?= $i ?></td>
                                     <td>
-                                        <input type="hidden" name="personel_k3[<?= $no-1 ?>][id]" value="<?= $p->id ?>">
-                                        <input type="text" name="personel_k3[<?= $no-1 ?>][nama]" class="form-control form-control-sm" value="<?= html_escape($p->nama) ?>" required>
+                                        <input type="hidden" name="personel_k3[<?= $i-1 ?>][id]" value="<?= $p->id ?>">
+                                        <input type="text" name="personel_k3[<?= $i-1 ?>][nama]" class="form-control form-control-sm" value="<?= html_escape($p->nama) ?>" required>
                                     </td>
-                                    <td><input type="text" name="personel_k3[<?= $no-1 ?>][nik]" class="form-control form-control-sm" value="<?= html_escape($p->nik) ?>" required></td>
-                                    <td><input type="text" name="personel_k3[<?= $no-1 ?>][jabatan_k3]" class="form-control form-control-sm" value="<?= html_escape($p->jabatan_k3) ?>"></td>
-                                    <td><input type="text" name="personel_k3[<?= $no-1 ?>][jenis_sertifikat_k3]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_sertifikat_k3) ?>"></td>
-                                    <td><input type="text" name="personel_k3[<?= $no-1 ?>][nomor_sertifikat_k3]" class="form-control form-control-sm" value="<?= html_escape($p->nomor_sertifikat_k3) ?>"></td>
-                                    <td><input type="date" name="personel_k3[<?= $no-1 ?>][masa_berlaku_sertifikat]" class="form-control form-control-sm" value="<?= $p->masa_berlaku_sertifikat ? date('Y-m-d', strtotime($p->masa_berlaku_sertifikat)) : '' ?>"></td>
+                                    <td><input type="text" name="personel_k3[<?= $i-1 ?>][nik]" class="form-control form-control-sm" value="<?= html_escape($p->nik) ?>" required></td>
+                                    <td><input type="text" name="personel_k3[<?= $i-1 ?>][jabatan_k3]" class="form-control form-control-sm" value="<?= html_escape($p->jabatan_k3) ?>"></td>
+                                    <td><input type="text" name="personel_k3[<?= $i-1 ?>][jenis_sertifikat_k3]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_sertifikat_k3) ?>"></td>
+                                    <td><input type="text" name="personel_k3[<?= $i-1 ?>][nomor_sertifikat_k3]" class="form-control form-control-sm" value="<?= html_escape($p->nomor_sertifikat_k3) ?>"></td>
+                                    <td><input type="date" name="personel_k3[<?= $i-1 ?>][masa_berlaku_sertifikat]" class="form-control form-control-sm" value="<?= $p->masa_berlaku_sertifikat ? date('Y-m-d', strtotime($p->masa_berlaku_sertifikat)) : '' ?>"></td>
                                     <td><button type="button" class="btn btn-sm btn-danger remove-personel-k3"><i class="fas fa-trash"></i></button></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -292,27 +359,27 @@
                                 </tr>
                             </thead>
                             <tbody id="peralatan-tbody">
-                                <?php $no = 1; foreach ($peralatan as $p): ?>
+                                <?php $i = 0; foreach ($peralatan as $p): $i++; ?>
                                 <tr>
-                                    <td><?= $no++ ?></td>
+                                    <td><?= $i ?></td>
                                     <td>
-                                        <input type="hidden" name="peralatan[<?= $no-1 ?>][id]" value="<?= $p->id ?>">
-                                        <input type="text" name="peralatan[<?= $no-1 ?>][jenis_alat]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_alat) ?>" required>
+                                        <input type="hidden" name="peralatan[<?= $i-1 ?>][id]" value="<?= $p->id ?>">
+                                        <input type="text" name="peralatan[<?= $i-1 ?>][jenis_alat]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_alat) ?>" required>
                                     </td>
-                                    <td><input type="text" name="peralatan[<?= $no-1 ?>][nama_alat]" class="form-control form-control-sm" value="<?= html_escape($p->nama_alat) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $no-1 ?>][merk]" class="form-control form-control-sm" value="<?= html_escape($p->merk) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $no-1 ?>][tipe]" class="form-control form-control-sm" value="<?= html_escape($p->tipe) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $no-1 ?>][kapasitas]" class="form-control form-control-sm" value="<?= html_escape($p->kapasitas) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $no-1 ?>][plat_serial]" class="form-control form-control-sm" value="<?= html_escape($p->plat_serial) ?>"></td>
-                                    <td><input type="number" name="peralatan[<?= $no-1 ?>][tahun_pembuatan]" class="form-control form-control-sm" value="<?= html_escape($p->tahun_pembuatan) ?>"></td>
+                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][nama_alat]" class="form-control form-control-sm" value="<?= html_escape($p->nama_alat) ?>"></td>
+                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][merk]" class="form-control form-control-sm" value="<?= html_escape($p->merk) ?>"></td>
+                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][tipe]" class="form-control form-control-sm" value="<?= html_escape($p->tipe) ?>"></td>
+                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][kapasitas]" class="form-control form-control-sm" value="<?= html_escape($p->kapasitas) ?>"></td>
+                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][plat_serial]" class="form-control form-control-sm" value="<?= html_escape($p->plat_serial) ?>"></td>
+                                    <td><input type="number" name="peralatan[<?= $i-1 ?>][tahun_pembuatan]" class="form-control form-control-sm" value="<?= html_escape($p->tahun_pembuatan) ?>"></td>
                                     <td>
-                                        <select name="peralatan[<?= $no-1 ?>][status_kepemilikan]" class="form-control form-control-sm">
+                                        <select name="peralatan[<?= $i-1 ?>][status_kepemilikan]" class="form-control form-control-sm">
                                             <option value="Milik Sendiri" <?= $p->status_kepemilikan == 'Milik Sendiri' ? 'selected' : '' ?>>Milik Sendiri</option>
                                             <option value="Sewa" <?= $p->status_kepemilikan == 'Sewa' ? 'selected' : '' ?>>Sewa</option>
                                             <option value="Kerjasama" <?= $p->status_kepemilikan == 'Kerjasama' ? 'selected' : '' ?>>Kerjasama</option>
                                         </select>
                                     </td>
-                                    <td><input type="number" name="peralatan[<?= $no-1 ?>][jumlah]" class="form-control form-control-sm" value="<?= html_escape($p->jumlah ?? 1) ?>" min="1"></td>
+                                    <td><input type="number" name="peralatan[<?= $i-1 ?>][jumlah]" class="form-control form-control-sm" value="<?= html_escape($p->jumlah ?? 1) ?>" min="1"></td>
                                     <td><button type="button" class="btn btn-sm btn-danger remove-peralatan"><i class="fas fa-trash"></i></button></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -341,9 +408,11 @@
 <script>
 $(document).ready(function() {
     // Initialize counters based on existing data
-    let peralatanCounter = <?= count($peralatan) ?>;
-    let personelLapanganCounter = <?= count($personel_lapangan) ?>;
-    let personelK3Counter = <?= count($personel_k3) ?>;
+    let peralatanCounter = <?= isset($peralatan) ? count($peralatan) : 0 ?>;
+    let personelLapanganCounter = <?= isset($personel_lapangan) ? count($personel_lapangan) : 0 ?>;
+    let personelK3Counter = <?= isset($personel_k3) ? count($personel_k3) : 0 ?>;
+    
+    console.log('Initial counters - Peralatan:', peralatanCounter, 'Personel Lapangan:', personelLapanganCounter, 'Personel K3:', personelK3Counter);
 
     // Format Rupiah - support koma desimal untuk Excel
     $('.rupiah').on('keyup', function() {
@@ -362,6 +431,23 @@ $(document).ready(function() {
             language: 'id'
         });
     }
+
+    // Auto update segmentasi based on HPS > 15 Miliar
+    $('#hps_input').on('keyup change blur', function() {
+        let val = $(this).val().replace(/\./g, '').replace(/,/g, '.');
+        let hpsNum = parseFloat(val);
+        if(!isNaN(hpsNum)) {
+            if(hpsNum > 15000000000) {
+                if($('#segmentasi').val() !== 'Non Kecil') {
+                    $('#segmentasi').val('Non Kecil').trigger('change');
+                }
+            } else {
+                if($('#segmentasi').val() !== 'Kecil') {
+                    $('#segmentasi').val('Kecil').trigger('change');
+                }
+            }
+        }
+    });
 
     // Add new peralatan row
     $('#add-peralatan').click(function() {
@@ -407,6 +493,7 @@ $(document).ready(function() {
                 <td><input type="text" name="personel_lapangan[${currentRowCount}][jenis_skk]" class="form-control form-control-sm"></td>
                 <td><input type="text" name="personel_lapangan[${currentRowCount}][nomor_skk]" class="form-control form-control-sm"></td>
                 <td><input type="date" name="personel_lapangan[${currentRowCount}][masa_berlaku_skk]" class="form-control form-control-sm"></td>
+                <td><input type="number" name="personel_lapangan[${currentRowCount}][masa_berlaku_skk_sertifikat]" class="form-control form-control-sm" placeholder="Tahun"></td>
                 <td><button type="button" class="btn btn-sm btn-danger remove-personel-lapangan"><i class="fas fa-trash"></i></button></td>
             </tr>
         `;
@@ -506,6 +593,12 @@ $(document).ready(function() {
 
     // Form validation
     $('#form-edit-tender').on('submit', function(e) {
+        // Log form data before submit
+        console.log('Form data before submit:', $(this).serialize());
+        console.log('Peralatan count:', $('#peralatan-tbody tr').length);
+        console.log('Personel Lapangan count:', $('#personel-lapangan-tbody tr').length);
+        console.log('Personel K3 count:', $('#personel-k3-tbody tr').length);
+        
         // Validate HPS format
         let hpsValue = $('#hps_input').val();
         let hpsClean = hpsValue.replace(/\./g, '').replace(/,/g, '.');

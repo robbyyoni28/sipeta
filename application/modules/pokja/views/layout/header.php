@@ -475,6 +475,12 @@
                 <li class="<?= $this->uri->segment(2) == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
                     <a href="<?= base_url('pokja/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> TENDER KONSULTANSI</a>
                 </li>
+                <li class="<?= $this->uri->segment(2) == 'manajer_teknik' ? 'active' : '' ?>">
+                    <a href="<?= base_url('pokja/manajer_teknik') ?>"><i class="fas fa-user-cog mr-2"></i> MANAJER TEKNIK</a>
+                </li>
+                <li class="<?= $this->uri->segment(2) == 'manajer_keuangan' ? 'active' : '' ?>">
+                    <a href="<?= base_url('pokja/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i> MANAJER KEUANGAN</a>
+                </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
                     <a href="<?= base_url('pokja/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i> PERSONEL LAPANGAN</a>
                 </li>

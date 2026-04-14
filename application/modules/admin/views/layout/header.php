@@ -301,6 +301,12 @@
                 </li>
 
                 <div class="sidebar-heading small text-muted px-4 mt-3 mb-1 text-uppercase font-weight-bold" style="font-size: 0.65rem;">Basis Data</div>
+                <li class="<?= $this->uri->segment(2) == 'manajer_teknik' ? 'active' : '' ?>">
+                    <a href="<?= base_url('admin/manajer_teknik') ?>"><i class="fas fa-user-cog"></i> Manajer Teknik</a>
+                </li>
+                <li class="<?= $this->uri->segment(2) == 'manajer_keuangan' ? 'active' : '' ?>">
+                    <a href="<?= base_url('admin/manajer_keuangan') ?>"><i class="fas fa-user-tie"></i> Manajer Keuangan</a>
+                </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
                     <a href="<?= base_url('admin/personel_lapangan') ?>"><i class="fas fa-users"></i> Personel Lapangan</a>
                 </li>

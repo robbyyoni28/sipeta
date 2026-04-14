@@ -571,6 +571,12 @@
                     <li class="<?= $this->uri->segment(2) == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i><span class="menu-text">TENDER KONSULTANSI</span></a>
                     </li>
+                    <li class="<?= $this->uri->segment(2) == 'manajer_teknik' ? 'active' : '' ?>">
+                        <a href="<?= base_url('sekretariat/manajer_teknik') ?>"><i class="fas fa-user-cog mr-2"></i><span class="menu-text">MANAJER TEKNIK</span></a>
+                    </li>
+                    <li class="<?= $this->uri->segment(2) == 'manajer_keuangan' ? 'active' : '' ?>">
+                        <a href="<?= base_url('sekretariat/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i><span class="menu-text">MANAJER KEUANGAN</span></a>
+                    </li>
                     <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i><span class="menu-text">PERSONEL LAPANGAN</span></a>
                     </li>

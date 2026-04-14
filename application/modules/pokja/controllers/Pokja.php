@@ -32,14 +32,20 @@ class Pokja extends MX_Controller {
     }
 
     public function detail($tender_id) {
-        $data = $this->Sekretariat_model->get_tender_detail($tender_id);
+        $this->load->model('admin/M_Tender');
+        $detail = $this->M_Tender->get_detail_tender($tender_id);
         
-        foreach ($data['personel'] as &$p) {
-            $p->history = $this->Sekretariat_model->get_personel_history($p->id);
+        if (!$detail) {
+            $this->session->set_flashdata('error', 'Data tidak ditemukan!');
+            redirect('pokja/data_tender');
         }
-        foreach ($data['peralatan'] as &$pl) {
-            $pl->history = $this->Sekretariat_model->get_peralatan_history($pl->id);
-        }
+
+        $data['tender'] = $detail['tender'];
+        $data['manajer_teknik'] = $detail['manajer_teknik'];
+        $data['manajer_keuangan'] = $detail['manajer_keuangan'];
+        $data['personel_lapangan'] = $detail['personel_lapangan'];
+        $data['personel_k3'] = $detail['personel_k3'];
+        $data['peralatan'] = $detail['peralatan'];
 
         $this->load->view('layout/header');
         $this->load->view('detail_tender', $data);
@@ -394,14 +400,23 @@ class Pokja extends MX_Controller {
             }
         }
 
-        $tender_data['manajer_proyek'] = $personel_lapangan[0]['nama'] ?? null;
-        $tender_data['nik_manajer_proyek'] = $personel_lapangan[0]['nik'] ?? null;
-        $tender_data['manajer_teknik'] = $personel_lapangan[1]['nama'] ?? null;
-        $tender_data['nik_manajer_teknik'] = $personel_lapangan[1]['nik'] ?? null;
-        $tender_data['manajer_keuangan'] = $personel_lapangan[2]['nama'] ?? null;
-        $tender_data['nik_manajer_keuangan'] = $personel_lapangan[2]['nik'] ?? null;
-        $tender_data['ahli_k3'] = $personel_k3[0]['nama'] ?? null;
-        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik'] ?? null;
+        // ── Manajer Teknik & Keuangan dari POST terpisah (bukan dari personel_lapangan)
+        $raw_mt = $this->input->post('manajer_teknik');
+        $raw_mk = $this->input->post('manajer_keuangan');
+        $manajer_teknik  = (!empty($raw_mt['nama']) && !empty($raw_mt['nik'])) ? $raw_mt : null;
+        $manajer_keuangan = (!empty($raw_mk['nama']) && !empty($raw_mk['nik'])) ? $raw_mk : null;
+
+        // ── Isi kolom referensi di tabel tender
+        $tender_data['manajer_teknik']       = $manajer_teknik['nama']  ?? null;
+        $tender_data['nik_manajer_teknik']   = $manajer_teknik['nik']   ?? null;
+        $tender_data['manajer_keuangan']     = $manajer_keuangan['nama'] ?? null;
+        $tender_data['nik_manajer_keuangan'] = $manajer_keuangan['nik']  ?? null;
+
+        // ── Personel Lapangan dari personel_lapangan[0] disimpan di kolom legacy manajer_proyek
+        $tender_data['manajer_proyek']     = $personel_lapangan[0]['nama'] ?? null;
+        $tender_data['nik_manajer_proyek'] = $personel_lapangan[0]['nik']  ?? null;
+        $tender_data['ahli_k3']     = $personel_k3[0]['nama'] ?? null;
+        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik']  ?? null;
 
         $force_save = $this->input->post('force_save') === '1';
         if (!$force_save) {
@@ -418,7 +433,7 @@ class Pokja extends MX_Controller {
             }
         }
 
-        if ($this->Sekretariat_model->save_winner_package($tender_data, $personel_lapangan, $personel_k3, $peralatan)) {
+        if ($this->Sekretariat_model->save_winner_package($tender_data, $personel_lapangan, $personel_k3, $peralatan, $manajer_teknik, $manajer_keuangan)) {
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['status' => 'success', 'message' => 'Paket Pemenang Berhasil Disimpan.']));
@@ -634,6 +649,167 @@ class Pokja extends MX_Controller {
         $this->load->view('layout/header');
         $this->load->view('detail_peralatan', $data);
         $this->load->view('layout/footer');
+    }
+
+    // ============================================
+    // MANAJER TEKNIK & KEUANGAN METHODS
+    // ============================================
+
+    private function _upload_dokumen_pokja($field_name) {
+        if (empty($_FILES[$field_name]['name'])) return null;
+        $upload_path = FCPATH . 'uploads/dokumen/';
+        if (!is_dir($upload_path)) mkdir($upload_path, 0777, true);
+        $config = [
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'pdf|jpg|jpeg|png',
+            'max_size'      => 2048,
+            'encrypt_name'  => TRUE
+        ];
+        $this->load->library('upload', $config);
+        if ($this->upload->do_upload($field_name)) {
+            return $this->upload->data('file_name');
+        }
+        return null;
+    }
+
+    public function manajer_teknik() {
+        $this->load->model('admin/M_Tender');
+        $penyedia_id = $this->input->get('penyedia_id');
+        $data['manajer_list'] = $this->M_Tender->get_all_manajer_teknik($penyedia_id);
+        $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
+        $data['selected_penyedia'] = $penyedia_id;
+        $this->load->view('layout/header');
+        $this->load->view('sekretariat/manajer_teknik', $data);
+        $this->load->view('layout/footer');
+    }
+
+    public function manajer_teknik_save() {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk')),
+            'created_by'      => $this->session->userdata('username')
+        ];
+        $file_ktp = $this->_upload_dokumen_pokja('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_pokja('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->insert('manajer_teknik', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Teknik berhasil ditambahkan.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menambahkan Manajer Teknik.']);
+        }
+    }
+
+    public function manajer_teknik_update($id) {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk'))
+        ];
+        $file_ktp = $this->_upload_dokumen_pokja('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_pokja('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->where('id', $id)->update('manajer_teknik', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Teknik berhasil diperbarui.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui Manajer Teknik.']);
+        }
+    }
+
+    public function manajer_keuangan() {
+        $this->load->model('admin/M_Tender');
+        $penyedia_id = $this->input->get('penyedia_id');
+        $data['manajer_list'] = $this->M_Tender->get_all_manajer_keuangan($penyedia_id);
+        $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
+        $data['selected_penyedia'] = $penyedia_id;
+        $this->load->view('layout/header');
+        $this->load->view('sekretariat/manajer_keuangan', $data);
+        $this->load->view('layout/footer');
+    }
+
+    public function manajer_keuangan_save() {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk')),
+            'created_by'      => $this->session->userdata('username')
+        ];
+        $file_ktp = $this->_upload_dokumen_pokja('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_pokja('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->insert('manajer_keuangan', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Keuangan berhasil ditambahkan.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menambahkan Manajer Keuangan.']);
+        }
+    }
+
+    public function manajer_keuangan_update($id) {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk'))
+        ];
+        $file_ktp = $this->_upload_dokumen_pokja('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_pokja('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->where('id', $id)->update('manajer_keuangan', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Keuangan berhasil diperbarui.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui Manajer Keuangan.']);
+        }
     }
 
     // ============================================

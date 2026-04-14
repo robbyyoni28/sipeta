@@ -17,10 +17,13 @@ class Admin extends MX_Controller {
                                            ->where('status_aktif', 1)
                                            ->count_all_results('users');
         
-        // Total Personel (Lapangan + K3)
+        // Total Personel (Lapangan + K3 + Manajer)
         $data['total_personel_lapangan'] = $this->db->count_all('personel_lapangan');
         $data['total_personel_k3'] = $this->db->count_all('personel_k3');
-        $data['total_personel'] = $data['total_personel_lapangan'] + $data['total_personel_k3'];
+        $data['total_manajer_teknik'] = $this->db->count_all('manajer_teknik');
+        $data['total_manajer_keuangan'] = $this->db->count_all('manajer_keuangan');
+        $data['total_personel'] = $data['total_personel_lapangan'] + $data['total_personel_k3']
+                                 + $data['total_manajer_teknik'] + $data['total_manajer_keuangan'];
         
         // Total Peralatan
         $data['total_peralatan'] = $this->db->count_all('peralatan');
@@ -97,15 +100,20 @@ class Admin extends MX_Controller {
     }
 
     public function detail($tender_id) {
-        $this->load->model('sekretariat/Sekretariat_model');
-        $data = $this->Sekretariat_model->get_tender_detail($tender_id);
+        $this->load->model('admin/M_Tender');
+        $detail = $this->M_Tender->get_detail_tender($tender_id);
         
-        foreach ($data['personel'] as &$p) {
-            $p->history = $this->Sekretariat_model->get_personel_history($p->id);
+        if (!$detail) {
+            $this->session->set_flashdata('error', 'Data tidak ditemukan!');
+            redirect('admin/data_tender');
         }
-        foreach ($data['peralatan'] as &$pl) {
-            $pl->history = $this->Sekretariat_model->get_peralatan_history($pl->id);
-        }
+
+        $data['tender'] = $detail['tender'];
+        $data['manajer_teknik'] = $detail['manajer_teknik'];
+        $data['manajer_keuangan'] = $detail['manajer_keuangan'];
+        $data['personel_lapangan'] = $detail['personel_lapangan'];
+        $data['personel_k3'] = $detail['personel_k3'];
+        $data['peralatan'] = $detail['peralatan'];
 
         $this->load->view('layout/header');
         $this->load->view('pokja/detail_tender', $data);
@@ -129,44 +137,22 @@ class Admin extends MX_Controller {
     }
 
     public function edit_tender($id) {
-        $this->load->model('sekretariat/Sekretariat_model');
-        $tender = $this->db->select('tender.*, penyedia.nama_perusahaan')
-                           ->from('tender')
-                           ->join('penyedia', 'penyedia.id = tender.penyedia_id', 'left')
-                           ->where('tender.id', $id)
-                           ->get()->row();
+        $this->load->model('admin/M_Tender');
+        $detail = $this->M_Tender->get_detail_tender($id);
 
-        if (!$tender) {
+        if (!$detail || !$detail['tender']) {
             $this->session->set_flashdata('error', 'Data tender tidak ditemukan.');
             redirect('admin/data_tender');
             return;
         }
 
-        // Ambil data peralatan yang terhubung dengan tender
-        $peralatan = $this->db->select('tp.*, p.nama_alat, p.merk, p.tipe, p.kapasitas, p.plat_serial, p.jenis_alat, p.tahun_pembuatan, p.status_kepemilikan')
-                              ->from('tender_peralatan tp')
-                              ->join('peralatan p', 'p.id = tp.peralatan_id')
-                              ->where('tp.tender_id', $id)
-                              ->get()->result();
-
-        // Ambil data personel lapangan yang terhubung dengan tender
-        $personel_lapangan = $this->db->select('tpl.*, pl.nama, pl.nik, pl.jabatan, pl.jenis_skk, pl.nomor_skk, pl.masa_berlaku_skk')
-                                     ->from('tender_personel_lapangan tpl')
-                                     ->join('personel_lapangan pl', 'pl.id = tpl.personel_lapangan_id')
-                                     ->where('tpl.tender_id', $id)
-                                     ->get()->result();
-
-        // Ambil data personel K3 yang terhubung dengan tender
-        $personel_k3 = $this->db->select('tpk.*, pk3.nama, pk3.nik, pk3.jabatan_k3, pk3.jenis_sertifikat_k3, pk3.nomor_sertifikat_k3, pk3.masa_berlaku_sertifikat')
-                                ->from('tender_personel_k3 tpk')
-                                ->join('personel_k3 pk3', 'pk3.id = tpk.personel_k3_id')
-                                ->where('tpk.tender_id', $id)
-                                ->get()->result();
-
-        $data['tender'] = $tender;
-        $data['peralatan'] = $peralatan;
-        $data['personel_lapangan'] = $personel_lapangan;
-        $data['personel_k3'] = $personel_k3;
+        $data['tender'] = $detail['tender'];
+        $data['manajer_teknik'] = !empty($detail['manajer_teknik']) ? $detail['manajer_teknik'][0] : null;
+        $data['manajer_keuangan'] = !empty($detail['manajer_keuangan']) ? $detail['manajer_keuangan'][0] : null;
+        $data['peralatan'] = $detail['peralatan'];
+        $data['personel_lapangan'] = $detail['personel_lapangan'];
+        $data['personel_k3'] = $detail['personel_k3'];
+        
         $this->load->view('layout/header');
         $this->load->view('admin/edit_tender', $data);
         $this->load->view('layout/footer');
@@ -175,6 +161,9 @@ class Admin extends MX_Controller {
     public function update_tender($id) {
         $this->load->model('sekretariat/Sekretariat_model');
         $this->load->library('form_validation');
+
+        // Debug log - log all POST data
+        error_log('update_tender - POST data: ' . print_r($_POST, true));
 
         // Set validation rules
         $this->form_validation->set_rules('satuan_kerja', 'Satuan Kerja', 'required|trim|max_length[255]');
@@ -185,6 +174,7 @@ class Admin extends MX_Controller {
         $this->form_validation->set_rules('nama_penyedia', 'Nama Penyedia', 'required|trim|max_length[255]');
 
         if ($this->form_validation->run() == FALSE) {
+            error_log('update_tender - Validation failed: ' . validation_errors());
             $this->session->set_flashdata('error', validation_errors());
             redirect('admin/edit_tender/' . $id);
             return;
@@ -235,23 +225,115 @@ class Admin extends MX_Controller {
 
         // Update tender data
         $this->db->where('id', $id)->update('tender', $update_data);
+        error_log('update_tender - Affected rows for tender update: ' . $this->db->affected_rows());
 
-        // Proses update peralatan jika ada
+        // File upload setup
+        $config['upload_path']   = './uploads/dokumen/';
+        $config['allowed_types'] = 'pdf|jpg|jpeg|png';
+        $config['max_size']      = 5120; // 5MB
+        $config['encrypt_name']  = TRUE;
+        $this->load->library('upload', $config);
+
+        // Update Manajer Teknik Table
+        if (!empty($update_data['nik_manajer_teknik'])) {
+            $mt_data = [
+                'nama' => $update_data['manajer_teknik'],
+                'jenis_skk' => $this->input->post('jenis_skk_manajer_teknik', TRUE),
+                'nomor_skk' => $this->input->post('nomor_skk_manajer_teknik', TRUE),
+            ];
+            
+            $dt_mt = $this->input->post('masa_berlaku_skk_manajer_teknik', TRUE);
+            if (!empty($dt_mt)) {
+                $dt = DateTime::createFromFormat('d/m/Y', $dt_mt);
+                if ($dt) $mt_data['masa_berlaku_skk'] = $dt->format('Y-m-d');
+            }
+
+            if (!empty($_FILES['file_ktp_manajer_teknik']['name'])) {
+                if ($this->upload->do_upload('file_ktp_manajer_teknik')) {
+                    $mt_data['file_ktp'] = $this->upload->data('file_name');
+                }
+            }
+            if (!empty($_FILES['file_skk_manajer_teknik']['name'])) {
+                if ($this->upload->do_upload('file_skk_manajer_teknik')) {
+                    $mt_data['file_skk'] = $this->upload->data('file_name');
+                }
+            }
+
+            $existing_mt = $this->db->get_where('manajer_teknik', ['nik' => $update_data['nik_manajer_teknik']])->row();
+            if ($existing_mt) {
+                $this->db->where('nik', $update_data['nik_manajer_teknik'])->update('manajer_teknik', $mt_data);
+            } else {
+                $mt_data['penyedia_id'] = $tender_row->penyedia_id ?? 0;
+                $mt_data['nik'] = $update_data['nik_manajer_teknik'];
+                $mt_data['created_by'] = $this->session->userdata('username');
+                $this->db->insert('manajer_teknik', $mt_data);
+            }
+        }
+
+        // Update Manajer Keuangan Table
+        if (!empty($update_data['nik_manajer_keuangan'])) {
+            $mk_data = [
+                'nama' => $update_data['manajer_keuangan'],
+                'jenis_skk' => $this->input->post('jenis_skk_manajer_keuangan', TRUE),
+                'nomor_skk' => $this->input->post('nomor_skk_manajer_keuangan', TRUE),
+            ];
+            
+            $dt_mk = $this->input->post('masa_berlaku_skk_manajer_keuangan', TRUE);
+            if (!empty($dt_mk)) {
+                $dt = DateTime::createFromFormat('d/m/Y', $dt_mk);
+                if ($dt) $mk_data['masa_berlaku_skk'] = $dt->format('Y-m-d');
+            }
+
+            if (!empty($_FILES['file_ktp_manajer_keuangan']['name'])) {
+                if ($this->upload->do_upload('file_ktp_manajer_keuangan')) {
+                    $mk_data['file_ktp'] = $this->upload->data('file_name');
+                }
+            }
+            if (!empty($_FILES['file_skk_manajer_keuangan']['name'])) {
+                if ($this->upload->do_upload('file_skk_manajer_keuangan')) {
+                    $mk_data['file_skk'] = $this->upload->data('file_name');
+                }
+            }
+
+            $existing_mk = $this->db->get_where('manajer_keuangan', ['nik' => $update_data['nik_manajer_keuangan']])->row();
+            if ($existing_mk) {
+                $this->db->where('nik', $update_data['nik_manajer_keuangan'])->update('manajer_keuangan', $mk_data);
+            } else {
+                $mk_data['penyedia_id'] = $tender_row->penyedia_id ?? 0;
+                $mk_data['nik'] = $update_data['nik_manajer_keuangan'];
+                $mk_data['created_by'] = $this->session->userdata('username');
+                $this->db->insert('manajer_keuangan', $mk_data);
+            }
+        }
+
+        // Proses update peralatan (selalu proses, termasuk jika kosong)
         $peralatan_data = $this->input->post('peralatan');
-        if (!empty($peralatan_data) && is_array($peralatan_data)) {
+        error_log('update_tender - peralatan_data: ' . print_r($peralatan_data, true));
+        if (is_array($peralatan_data)) {
             $this->update_tender_peralatan($id, $peralatan_data);
+        } else {
+            error_log('update_tender - peralatan_data is not array, treating as empty');
+            $this->update_tender_peralatan($id, []);
         }
 
-        // Proses update personel lapangan jika ada
+        // Proses update personel lapangan (selalu proses, termasuk jika kosong)
         $personel_lapangan_data = $this->input->post('personel_lapangan');
-        if (!empty($personel_lapangan_data) && is_array($personel_lapangan_data)) {
+        error_log('update_tender - personel_lapangan_data: ' . print_r($personel_lapangan_data, true));
+        if (is_array($personel_lapangan_data)) {
             $this->update_tender_personel_lapangan($id, $personel_lapangan_data);
+        } else {
+            error_log('update_tender - personel_lapangan_data is not array, treating as empty');
+            $this->update_tender_personel_lapangan($id, []);
         }
 
-        // Proses update personel K3 jika ada
+        // Proses update personel K3 (selalu proses, termasuk jika kosong)
         $personel_k3_data = $this->input->post('personel_k3');
-        if (!empty($personel_k3_data) && is_array($personel_k3_data)) {
+        error_log('update_tender - personel_k3_data: ' . print_r($personel_k3_data, true));
+        if (is_array($personel_k3_data)) {
             $this->update_tender_personel_k3($id, $personel_k3_data);
+        } else {
+            error_log('update_tender - personel_k3_data is not array, treating as empty');
+            $this->update_tender_personel_k3($id, []);
         }
 
         if ($this->db->affected_rows() >= 0) {
@@ -263,21 +345,15 @@ class Admin extends MX_Controller {
     }
 
     private function update_tender_peralatan($tender_id, $peralatan_data) {
-        // Get existing peralatan for this tender
-        $existing_tender_peralatan = $this->db->where('tender_id', $tender_id)
-                                             ->get('tender_peralatan')
-                                             ->result();
-        
-        $existing_peralatan_ids = [];
-        foreach ($existing_tender_peralatan as $existing) {
-            $existing_peralatan_ids[] = $existing->peralatan_id;
-        }
+        // Delete-then-insert: hapus semua peralatan tender secara brutal sebelum meng-insert yang baru
+        $this->db->where('tender_id', $tender_id)->delete('tender_peralatan');
+
+        if (empty($peralatan_data)) return;
 
         // Process submitted peralatan data
-        $submitted_peralatan_ids = [];
         foreach ($peralatan_data as $peralatan) {
-            if (!empty(trim($peralatan['jenis_alat']))) {
-                // Cek apakah peralatan sudah ada di master
+            if (!empty(trim($peralatan['jenis_alat'] ?? ''))) {
+                // Cek apakah peralatan sudah ada di master berdasar plat/serial
                 $existing_peralatan = $this->db->where('plat_serial', $peralatan['plat_serial'])
                                                ->get('peralatan')
                                                ->row();
@@ -312,39 +388,15 @@ class Admin extends MX_Controller {
                     $peralatan_id = $this->db->insert_id();
                 }
 
-                // Check if already linked to tender
-                $existing_link = $this->db->where('tender_id', $tender_id)
-                                         ->where('peralatan_id', $peralatan_id)
-                                         ->get('tender_peralatan')
-                                         ->row();
-
-                if ($existing_link) {
-                    // Update existing link
-                    $this->db->where('id', $existing_link->id)->update('tender_peralatan', [
-                        'jumlah' => $peralatan['jumlah'] ?? 1,
-                        'keterangan' => $peralatan['keterangan'] ?? null
-                    ]);
-                } else {
-                    // Create new link
-                    $tender_peralatan = [
-                        'tender_id' => $tender_id,
-                        'peralatan_id' => $peralatan_id,
-                        'jumlah' => $peralatan['jumlah'] ?? 1,
-                        'keterangan' => $peralatan['keterangan'] ?? null
-                    ];
-                    $this->db->insert('tender_peralatan', $tender_peralatan);
-                }
-
-                $submitted_peralatan_ids[] = $peralatan_id;
+                // Create new link
+                $tender_peralatan = [
+                    'tender_id' => $tender_id,
+                    'peralatan_id' => $peralatan_id,
+                    'jumlah' => $peralatan['jumlah'] ?? 1,
+                    'keterangan' => $peralatan['keterangan'] ?? null
+                ];
+                $this->db->insert('tender_peralatan', $tender_peralatan);
             }
-        }
-
-        // Remove peralatan that are no longer in the submitted data
-        $to_remove = array_diff($existing_peralatan_ids, $submitted_peralatan_ids);
-        if (!empty($to_remove)) {
-            $this->db->where('tender_id', $tender_id)
-                     ->where_in('peralatan_id', $to_remove)
-                     ->delete('tender_peralatan');
         }
     }
 
@@ -388,7 +440,8 @@ class Admin extends MX_Controller {
                         'jabatan' => $personel['jabatan'],
                         'jenis_skk' => $personel['jenis_skk'],
                         'nomor_skk' => $personel['nomor_skk'],
-                        'masa_berlaku_skk' => !empty($personel['masa_berlaku_skk']) ? date('Y-m-d', strtotime($personel['masa_berlaku_skk'])) : null
+                        'masa_berlaku_skk' => !empty($personel['masa_berlaku_skk']) ? date('Y-m-d', strtotime($personel['masa_berlaku_skk'])) : null,
+                        'masa_berlaku_skk_sertifikat' => !empty($personel['masa_berlaku_skk_sertifikat']) ? $personel['masa_berlaku_skk_sertifikat'] : null
                     ]);
                 } else {
                     // Create new personel in master
@@ -400,6 +453,7 @@ class Admin extends MX_Controller {
                         'jenis_skk' => $personel['jenis_skk'],
                         'nomor_skk' => $personel['nomor_skk'],
                         'masa_berlaku_skk' => !empty($personel['masa_berlaku_skk']) ? date('Y-m-d', strtotime($personel['masa_berlaku_skk'])) : null,
+                        'masa_berlaku_skk_sertifikat' => !empty($personel['masa_berlaku_skk_sertifikat']) ? $personel['masa_berlaku_skk_sertifikat'] : null,
                         'created_by' => $this->session->userdata('username')
                     ];
                     $this->db->insert('personel_lapangan', $new_personel);
@@ -652,6 +706,169 @@ class Admin extends MX_Controller {
         $this->load->view('layout/footer');
     }
 
+    // ============================================
+    // MANAJER TEKNIK & KEUANGAN METHODS
+    // ============================================
+
+    private function _upload_dokumen_admin($field_name) {
+        if (empty($_FILES[$field_name]['name'])) return null;
+        $upload_path = FCPATH . 'uploads/dokumen/';
+        if (!is_dir($upload_path)) mkdir($upload_path, 0777, true);
+        $config = [
+            'upload_path'   => $upload_path,
+            'allowed_types' => 'pdf|jpg|jpeg|png',
+            'max_size'      => 2048,
+            'encrypt_name'  => TRUE
+        ];
+        $this->load->library('upload', $config);
+        if ($this->upload->do_upload($field_name)) {
+            return $this->upload->data('file_name');
+        }
+        return null;
+    }
+
+    public function manajer_teknik() {
+        $this->load->model('admin/M_Tender');
+        $this->load->model('sekretariat/Sekretariat_model');
+        $penyedia_id = $this->input->get('penyedia_id');
+        $data['manajer_list'] = $this->M_Tender->get_all_manajer_teknik($penyedia_id);
+        $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
+        $data['selected_penyedia'] = $penyedia_id;
+        $this->load->view('layout/header');
+        $this->load->view('sekretariat/manajer_teknik', $data);
+        $this->load->view('layout/footer');
+    }
+
+    public function manajer_teknik_save() {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk')),
+            'created_by'      => $this->session->userdata('username')
+        ];
+        $file_ktp = $this->_upload_dokumen_admin('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_admin('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->insert('manajer_teknik', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Teknik berhasil ditambahkan.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menambahkan Manajer Teknik.']);
+        }
+    }
+
+    public function manajer_teknik_update($id) {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk'))
+        ];
+        $file_ktp = $this->_upload_dokumen_admin('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_admin('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->where('id', $id)->update('manajer_teknik', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Teknik berhasil diperbarui.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui Manajer Teknik.']);
+        }
+    }
+
+    public function manajer_keuangan() {
+        $this->load->model('admin/M_Tender');
+        $this->load->model('sekretariat/Sekretariat_model');
+        $penyedia_id = $this->input->get('penyedia_id');
+        $data['manajer_list'] = $this->M_Tender->get_all_manajer_keuangan($penyedia_id);
+        $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
+        $data['selected_penyedia'] = $penyedia_id;
+        $this->load->view('layout/header');
+        $this->load->view('sekretariat/manajer_keuangan', $data);
+        $this->load->view('layout/footer');
+    }
+
+    public function manajer_keuangan_save() {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk')),
+            'created_by'      => $this->session->userdata('username')
+        ];
+        $file_ktp = $this->_upload_dokumen_admin('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_admin('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->insert('manajer_keuangan', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Keuangan berhasil ditambahkan.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menambahkan Manajer Keuangan.']);
+        }
+    }
+
+    public function manajer_keuangan_update($id) {
+        $normalize = function($v) {
+            if (!$v) return null;
+            $v = trim((string)$v);
+            if (!$v) return null;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+            $dt = DateTime::createFromFormat('d/m/Y', $v);
+            return $dt ? $dt->format('Y-m-d') : null;
+        };
+        $data = [
+            'penyedia_id'     => $this->input->post('penyedia_id'),
+            'nama'            => $this->input->post('nama'),
+            'nik'             => $this->input->post('nik'),
+            'jenis_skk'       => $this->input->post('jenis_skk'),
+            'nomor_skk'       => $this->input->post('nomor_skk'),
+            'masa_berlaku_skk'=> $normalize($this->input->post('masa_berlaku_skk'))
+        ];
+        $file_ktp = $this->_upload_dokumen_admin('file_ktp');
+        if ($file_ktp) $data['file_ktp'] = $file_ktp;
+        $file_skk = $this->_upload_dokumen_admin('file_skk');
+        if ($file_skk) $data['file_skk'] = $file_skk;
+
+        if ($this->db->where('id', $id)->update('manajer_keuangan', $data)) {
+            echo json_encode(['status' => 'success', 'message' => 'Manajer Keuangan berhasil diperbarui.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui Manajer Keuangan.']);
+        }
+    }
+
     public function cari_personel() {
         $this->load->view('layout/header');
         $this->load->view('pokja/cari_personel');
@@ -760,14 +977,23 @@ class Admin extends MX_Controller {
             }
         }
 
-        $tender_data['manajer_proyek'] = $personel_lapangan[0]['nama'] ?? null;
-        $tender_data['nik_manajer_proyek'] = $personel_lapangan[0]['nik'] ?? null;
-        $tender_data['manajer_teknik'] = $personel_lapangan[1]['nama'] ?? null;
-        $tender_data['nik_manajer_teknik'] = $personel_lapangan[1]['nik'] ?? null;
-        $tender_data['manajer_keuangan'] = $personel_lapangan[2]['nama'] ?? null;
-        $tender_data['nik_manajer_keuangan'] = $personel_lapangan[2]['nik'] ?? null;
-        $tender_data['ahli_k3'] = $personel_k3[0]['nama'] ?? null;
-        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik'] ?? null;
+        // ── Manajer Teknik & Keuangan dari POST terpisah (bukan dari personel_lapangan)
+        $raw_mt = $this->input->post('manajer_teknik');
+        $raw_mk = $this->input->post('manajer_keuangan');
+        $manajer_teknik   = (!empty($raw_mt['nama']) && !empty($raw_mt['nik'])) ? $raw_mt : null;
+        $manajer_keuangan = (!empty($raw_mk['nama']) && !empty($raw_mk['nik'])) ? $raw_mk : null;
+
+        // ── Isi kolom referensi di tabel tender
+        $tender_data['manajer_teknik']       = $manajer_teknik['nama']   ?? null;
+        $tender_data['nik_manajer_teknik']   = $manajer_teknik['nik']    ?? null;
+        $tender_data['manajer_keuangan']     = $manajer_keuangan['nama'] ?? null;
+        $tender_data['nik_manajer_keuangan'] = $manajer_keuangan['nik']  ?? null;
+
+        // ── Personel Lapangan dari personel_lapangan[0] disimpan di kolom legacy manajer_proyek
+        $tender_data['manajer_proyek']       = $personel_lapangan[0]['nama'] ?? null;
+        $tender_data['nik_manajer_proyek']   = $personel_lapangan[0]['nik']  ?? null;
+        $tender_data['ahli_k3']     = $personel_k3[0]['nama'] ?? null;
+        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik']  ?? null;
 
         $this->load->model('sekretariat/Sekretariat_model');
 
@@ -786,7 +1012,7 @@ class Admin extends MX_Controller {
             }
         }
 
-        if ($this->Sekretariat_model->save_winner_package($tender_data, $personel_lapangan, $personel_k3, $peralatan)) {
+        if ($this->Sekretariat_model->save_winner_package($tender_data, $personel_lapangan, $personel_k3, $peralatan, $manajer_teknik, $manajer_keuangan)) {
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['status' => 'success', 'message' => 'Paket Pemenang Berhasil Disimpan.']));

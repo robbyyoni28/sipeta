@@ -24,7 +24,7 @@
     </div>
 <?php endif; ?>
 
-<form action="<?= base_url($module.'/simpan_pemenang') ?>" method="POST" id="form-pemenang">
+<form action="<?= base_url($module.'/simpan_pemenang') ?>" method="POST" id="form-pemenang" enctype="multipart/form-data">
     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
     <?php if(isset($jenis_tender) && $jenis_tender == 'konsultansi'): ?>
         <input type="hidden" name="jenis_tender" value="konsultansi">
@@ -95,8 +95,8 @@
                     <div class="form-group">
                         <label class="small font-weight-bold text-uppercase text-muted">Kualifikasi Usaha</label>
                         <select name="kualifikasi" id="kualifikasi" class="form-control bg-light border-0" style="border-radius: 10px;">
+                            <option value="Kecil" selected>Usaha Kecil</option>
                             <option value="Non Kecil">Menengah / Besar</option>
-                            <option value="Kecil">Usaha Kecil</option>
                         </select>
                     </div>
                 </div>
@@ -124,9 +124,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- PM -->
-                                <tr class="bg-white row-mp">
-                                <td class="font-weight-bold px-4 align-middle">Manajer Proyek / Pelaksana Lapangan</td>
+                                <!-- Personel Lapangan -->
+                                <tr class="bg-white row-pl">
+                                    <td class="font-weight-bold px-4 align-middle">Personel Lapangan</td>
                                     <td class="py-3">
                                         <input type="text" name="personel_lapangan[0][nama]" class="form-control form-control-sm mb-1 bg-light border-0" placeholder="Nama Lengkap" style="border-radius: 8px;">
                                         <input type="text" name="personel_lapangan[0][nik]" class="form-control form-control-sm nik-check bg-light border-0" placeholder="NIK" style="border-radius: 8px;">
@@ -138,39 +138,37 @@
                                         <div class="feedback-skk-inline"></div>
                                     </td>
                                     <td class="py-3 px-4"><input type="text" name="personel_lapangan[0][masa_berlaku_skk]" class="form-control form-control-sm bg-light border-0 datepicker" style="border-radius: 8px;" placeholder="dd/mm/yyyy"></td>
-                                    <input type="hidden" name="personel_lapangan[0][jabatan]" value="Manajer Proyek/Pelaksana Lapangan">
+                                    <input type="hidden" name="personel_lapangan[0][jabatan]" value="Personel Lapangan">
                                 </tr>
                                 <!-- MT -->
                                 <tr class="bg-light-faded row-mt">
                                     <td class="font-weight-bold px-4 align-middle">Manajer Teknik</td>
                                     <td class="py-3">
-                                        <input type="text" name="personel_lapangan[1][nama]" class="form-control form-control-sm mb-1 bg-light border-0" placeholder="Nama Lengkap" style="border-radius: 8px;">
-                                        <input type="text" name="personel_lapangan[1][nik]" class="form-control form-control-sm nik-check bg-light border-0" placeholder="NIK" style="border-radius: 8px;">
+                                        <input type="text" name="manajer_teknik[nama]" class="form-control form-control-sm mb-1 bg-light border-0" placeholder="Nama Lengkap" style="border-radius: 8px;">
+                                        <input type="text" name="manajer_teknik[nik]" class="form-control form-control-sm nik-check bg-light border-0" placeholder="NIK" style="border-radius: 8px;">
                                         <div class="feedback-nik-inline"></div>
                                     </td>
-                                    <td class="py-3"><input type="text" name="personel_lapangan[1][jenis_skk]" class="form-control form-control-sm bg-light border-0" placeholder="Jenis SKK" style="border-radius: 8px;"></td>
+                                    <td class="py-3"><input type="text" name="manajer_teknik[jenis_skk]" class="form-control form-control-sm bg-light border-0" placeholder="Jenis SKK" style="border-radius: 8px;"></td>
                                     <td class="py-3">
-                                        <input type="text" name="personel_lapangan[1][nomor_skk]" class="form-control form-control-sm skk-check bg-light border-0" placeholder="No. SKK" style="border-radius: 8px;">
+                                        <input type="text" name="manajer_teknik[nomor_skk]" class="form-control form-control-sm skk-check bg-light border-0" placeholder="No. SKK" style="border-radius: 8px;">
                                         <div class="feedback-skk-inline"></div>
                                     </td>
-                                    <td class="py-3 px-4"><input type="text" name="personel_lapangan[1][masa_berlaku_skk]" class="form-control form-control-sm bg-light border-0 datepicker" style="border-radius: 8px;" placeholder="dd/mm/yyyy"></td>
-                                    <input type="hidden" name="personel_lapangan[1][jabatan]" value="Manajer Teknik">
+                                    <td class="py-3 px-4"><input type="text" name="manajer_teknik[masa_berlaku_skk]" class="form-control form-control-sm bg-light border-0 datepicker" style="border-radius: 8px;" placeholder="dd/mm/yyyy"></td>
                                 </tr>
                                 <!-- MK -->
                                 <tr class="row-mk">
                                     <td class="font-weight-bold px-4 align-middle">Manajer Keuangan</td>
                                     <td class="py-3">
-                                        <input type="text" name="personel_lapangan[2][nama]" class="form-control form-control-sm mb-1 bg-light border-0" placeholder="Nama Lengkap" style="border-radius: 8px;">
-                                        <input type="text" name="personel_lapangan[2][nik]" class="form-control form-control-sm nik-check bg-light border-0" placeholder="NIK" style="border-radius: 8px;">
+                                        <input type="text" name="manajer_keuangan[nama]" class="form-control form-control-sm mb-1 bg-light border-0" placeholder="Nama Lengkap" style="border-radius: 8px;">
+                                        <input type="text" name="manajer_keuangan[nik]" class="form-control form-control-sm nik-check bg-light border-0" placeholder="NIK" style="border-radius: 8px;">
                                         <div class="feedback-nik-inline"></div>
                                     </td>
-                                    <td class="py-3"><input type="text" name="personel_lapangan[2][jenis_skk]" class="form-control form-control-sm bg-light border-0" placeholder="Jenis SKK" style="border-radius: 8px;"></td>
+                                    <td class="py-3"><input type="text" name="manajer_keuangan[jenis_skk]" class="form-control form-control-sm bg-light border-0" placeholder="Jenis SKK" style="border-radius: 8px;"></td>
                                     <td class="py-3">
-                                        <input type="text" name="personel_lapangan[2][nomor_skk]" class="form-control form-control-sm skk-check bg-light border-0" placeholder="No. SKK" style="border-radius: 8px;">
+                                        <input type="text" name="manajer_keuangan[nomor_skk]" class="form-control form-control-sm skk-check bg-light border-0" placeholder="No. SKK" style="border-radius: 8px;">
                                         <div class="feedback-skk-inline"></div>
                                     </td>
-                                    <td class="py-3 px-4"><input type="text" name="personel_lapangan[2][masa_berlaku_skk]" class="form-control form-control-sm bg-light border-0 datepicker" style="border-radius: 8px;" placeholder="dd/mm/yyyy"></td>
-                                    <input type="hidden" name="personel_lapangan[2][jabatan]" value="Manajer Keuangan">
+                                    <td class="py-3 px-4"><input type="text" name="manajer_keuangan[masa_berlaku_skk]" class="form-control form-control-sm bg-light border-0 datepicker" style="border-radius: 8px;" placeholder="dd/mm/yyyy"></td>
                                 </tr>
                                 <!-- K3 -->
                                 <tr style="background-color: rgba(247, 37, 133, 0.05);">
@@ -426,6 +424,23 @@ $(document).ready(function() {
     }
     $('#kualifikasi').on('change', applySegmentasiVisibility);
     applySegmentasiVisibility();
+
+    // Auto update kualifikasi based on HPS > 15 Miliar
+    $('input[name="hps"]').on('keyup change blur', function() {
+        let val = $(this).val().replace(/\./g, '').replace(/,/g, '.');
+        let hpsNum = parseFloat(val);
+        if(!isNaN(hpsNum)) {
+            if(hpsNum > 15000000000) {
+                if($('#kualifikasi').val() !== 'Non Kecil') {
+                    $('#kualifikasi').val('Non Kecil').trigger('change');
+                }
+            } else {
+                if($('#kualifikasi').val() !== 'Kecil') {
+                    $('#kualifikasi').val('Kecil').trigger('change');
+                }
+            }
+        }
+    });
 
     // Function to show detailed duplicate modal
     function showDuplicateModal(type, data, callback) {

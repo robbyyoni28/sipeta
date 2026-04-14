@@ -46,7 +46,7 @@ class Sekretariat_model extends CI_Model {
      * Save winner package with complete data
      * Updated to support new schema with all fields
      */
-    public function save_winner_package($tender_data, $personel_lapangan = [], $personel_k3 = [], $peralatan = []) {
+    public function save_winner_package($tender_data, $personel_lapangan = [], $personel_k3 = [], $peralatan = [], $manajer_teknik = null, $manajer_keuangan = null) {
         $this->db->trans_start();
 
         // 1. Find or Create Penyedia
@@ -96,16 +96,64 @@ class Sekretariat_model extends CI_Model {
         $this->db->insert('tender', $tender_insert);
         $tender_id = $this->db->insert_id();
 
-        // 3. Process Personel Lapangan
+        // 3a. Save Manajer Teknik langsung ke tabel manajer_teknik
+        if (!empty($manajer_teknik) && !empty($manajer_teknik['nama']) && !empty($manajer_teknik['nik'])) {
+            $p = $manajer_teknik;
+            $existing_mt = $this->db->get_where('manajer_teknik', ['nik' => $p['nik']])->row();
+            if ($existing_mt) {
+                $this->db->where('id', $existing_mt->id)->update('manajer_teknik', [
+                    'penyedia_id'     => $penyedia_id,
+                    'nama'            => $p['nama'],
+                    'jenis_skk'       => $p['jenis_skk'] ?? null,
+                    'nomor_skk'       => $p['nomor_skk'] ?? null,
+                    'masa_berlaku_skk'=> $this->normalize_date($p['masa_berlaku_skk'] ?? null)
+                ]);
+            } else {
+                $this->db->insert('manajer_teknik', [
+                    'penyedia_id'     => $penyedia_id,
+                    'nama'            => $p['nama'],
+                    'nik'             => $p['nik'],
+                    'jenis_skk'       => $p['jenis_skk'] ?? null,
+                    'nomor_skk'       => $p['nomor_skk'] ?? null,
+                    'masa_berlaku_skk'=> $this->normalize_date($p['masa_berlaku_skk'] ?? null),
+                    'created_by'      => $this->session->userdata('username')
+                ]);
+            }
+        }
+
+        // 3b. Save Manajer Keuangan langsung ke tabel manajer_keuangan
+        if (!empty($manajer_keuangan) && !empty($manajer_keuangan['nama']) && !empty($manajer_keuangan['nik'])) {
+            $p = $manajer_keuangan;
+            $existing_mk = $this->db->get_where('manajer_keuangan', ['nik' => $p['nik']])->row();
+            if ($existing_mk) {
+                $this->db->where('id', $existing_mk->id)->update('manajer_keuangan', [
+                    'penyedia_id'     => $penyedia_id,
+                    'nama'            => $p['nama'],
+                    'jenis_skk'       => $p['jenis_skk'] ?? null,
+                    'nomor_skk'       => $p['nomor_skk'] ?? null,
+                    'masa_berlaku_skk'=> $this->normalize_date($p['masa_berlaku_skk'] ?? null)
+                ]);
+            } else {
+                $this->db->insert('manajer_keuangan', [
+                    'penyedia_id'     => $penyedia_id,
+                    'nama'            => $p['nama'],
+                    'nik'             => $p['nik'],
+                    'jenis_skk'       => $p['jenis_skk'] ?? null,
+                    'nomor_skk'       => $p['nomor_skk'] ?? null,
+                    'masa_berlaku_skk'=> $this->normalize_date($p['masa_berlaku_skk'] ?? null),
+                    'created_by'      => $this->session->userdata('username')
+                ]);
+            }
+        }
+
+        // 3c. Save Personel Lapangan (Manajer Proyek, Pelaksana, dll)
         if (!empty($personel_lapangan)) {
             foreach ($personel_lapangan as $p) {
                 if (empty($p['nama']) || empty($p['nik'])) continue;
                 
-                // Check if personel exists by NIK
                 $existing = $this->db->get_where('personel_lapangan', ['nik' => $p['nik']])->row();
                 if ($existing) {
                     $personel_id = $existing->id;
-                    // Update details
                     $this->db->where('id', $personel_id)->update('personel_lapangan', [
                         'nama' => $p['nama'],
                         'jenis_skk' => $p['jenis_skk'] ?? null,
@@ -127,7 +175,6 @@ class Sekretariat_model extends CI_Model {
                     $personel_id = $this->db->insert_id();
                 }
                 
-                // Link to tender
                 $this->db->insert('tender_personel_lapangan', [
                     'tender_id' => $tender_id,
                     'personel_lapangan_id' => $personel_id
@@ -320,5 +367,67 @@ class Sekretariat_model extends CI_Model {
             $years[] = $row->tahun_anggaran;
         }
         return $years;
+    }
+
+    /**
+     * Check for duplicate data in bulk input
+     * 
+     * @param array $post POST data
+     * @return array Result with duplicates info
+     */
+    public function check_bulk_duplicates($post) {
+        $duplicates = [];
+        
+        // Check duplicate kode_tender
+        if (isset($post['kode_tender'])) {
+            $existing = $this->db->where('kode_tender', $post['kode_tender'])->get('tender')->row();
+            if ($existing) {
+                $duplicates['kode_tender'] = 'Kode Tender sudah ada';
+            }
+        }
+        
+        // Check duplicate NIK personel lapangan
+        if (isset($post['personel_lapangan']) && is_array($post['personel_lapangan'])) {
+            $nik_list = [];
+            foreach ($post['personel_lapangan'] as $p) {
+                if (!empty($p['nik'])) {
+                    if (in_array($p['nik'], $nik_list)) {
+                        $duplicates['personel_lapangan'][] = "NIK {$p['nik']} duplikat dalam input";
+                    }
+                    $nik_list[] = $p['nik'];
+                }
+            }
+        }
+        
+        // Check duplicate NIK personel K3
+        if (isset($post['personel_k3']) && is_array($post['personel_k3'])) {
+            $nik_list = [];
+            foreach ($post['personel_k3'] as $p) {
+                if (!empty($p['nik'])) {
+                    if (in_array($p['nik'], $nik_list)) {
+                        $duplicates['personel_k3'][] = "NIK {$p['nik']} duplikat dalam input";
+                    }
+                    $nik_list[] = $p['nik'];
+                }
+            }
+        }
+        
+        // Check duplicate plat_serial peralatan
+        if (isset($post['peralatan']) && is_array($post['peralatan'])) {
+            $plat_list = [];
+            foreach ($post['peralatan'] as $p) {
+                if (!empty($p['plat_serial'])) {
+                    if (in_array($p['plat_serial'], $plat_list)) {
+                        $duplicates['peralatan'][] = "No Seri {$p['plat_serial']} duplikat dalam input";
+                    }
+                    $plat_list[] = $p['plat_serial'];
+                }
+            }
+        }
+        
+        return [
+            'has_duplicates' => !empty($duplicates),
+            'duplicates' => $duplicates
+        ];
     }
 }

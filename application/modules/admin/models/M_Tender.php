@@ -48,13 +48,40 @@ class M_Tender extends CI_Model {
                               ->get()
                               ->result();
 
+        // Get Manajer Teknik dari tabel manajer_teknik (prioritas: by NIK lalu by penyedia_id)
+        $manajer_teknik = [];
+        if (!empty($tender->nik_manajer_teknik)) {
+            $mt = $this->db->get_where('manajer_teknik', ['nik' => $tender->nik_manajer_teknik])->row();
+            if ($mt) $manajer_teknik[] = $mt;
+        }
+        // Fallback: ambil semua manajer teknik berdasarkan penyedia_id jika NIK kosong
+        if (empty($manajer_teknik) && !empty($tender->penyedia_id)) {
+            $mts = $this->db->get_where('manajer_teknik', ['penyedia_id' => $tender->penyedia_id])->result();
+            $manajer_teknik = $mts ?: [];
+        }
+
+        // Get Manajer Keuangan dari tabel manajer_keuangan (prioritas: by NIK lalu by penyedia_id)
+        $manajer_keuangan = [];
+        if (!empty($tender->nik_manajer_keuangan)) {
+            $mk = $this->db->get_where('manajer_keuangan', ['nik' => $tender->nik_manajer_keuangan])->row();
+            if ($mk) $manajer_keuangan[] = $mk;
+        }
+        // Fallback: ambil semua manajer keuangan berdasarkan penyedia_id jika NIK kosong
+        if (empty($manajer_keuangan) && !empty($tender->penyedia_id)) {
+            $mks = $this->db->get_where('manajer_keuangan', ['penyedia_id' => $tender->penyedia_id])->result();
+            $manajer_keuangan = $mks ?: [];
+        }
+
         return [
             'tender' => $tender,
+            'manajer_teknik' => $manajer_teknik,
+            'manajer_keuangan' => $manajer_keuangan,
             'personel_lapangan' => $personel_lapangan,
             'personel_k3' => $personel_k3,
             'peralatan' => $peralatan
         ];
     }
+
 
     /**
      * Save batch peralatan dengan logika delete-then-insert
@@ -276,6 +303,34 @@ class M_Tender extends CI_Model {
     /**
      * Get tender statistics untuk dashboard
      */
+    /**
+     * Get all manajer teknik dengan filter penyedia
+     */
+    public function get_all_manajer_teknik($penyedia_id = null) {
+        $this->db->select('mt.*, p.nama_perusahaan');
+        $this->db->from('manajer_teknik mt');
+        $this->db->join('penyedia p', 'p.id = mt.penyedia_id', 'left');
+        if ($penyedia_id) {
+            $this->db->where('mt.penyedia_id', $penyedia_id);
+        }
+        $this->db->order_by('mt.id', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get all manajer keuangan dengan filter penyedia
+     */
+    public function get_all_manajer_keuangan($penyedia_id = null) {
+        $this->db->select('mk.*, p.nama_perusahaan');
+        $this->db->from('manajer_keuangan mk');
+        $this->db->join('penyedia p', 'p.id = mk.penyedia_id', 'left');
+        if ($penyedia_id) {
+            $this->db->where('mk.penyedia_id', $penyedia_id);
+        }
+        $this->db->order_by('mk.id', 'DESC');
+        return $this->db->get()->result();
+    }
+
     public function get_tender_statistics() {
         $current_year = date('Y');
         
