@@ -24,7 +24,7 @@ class Admin extends MX_Controller {
         $this->load->library('upload');
         $this->load->helper('security');
         $this->load->model('M_Admin');
-        $this->load->model('M_Tender');
+        $this->load->model('Tender_model');
     }
 
     /**
@@ -88,7 +88,7 @@ class Admin extends MX_Controller {
             }
             
             // Get tender data with all relations
-            $tender_data = $this->M_Tender->get_detail_tender($id);
+            $tender_data = $this->Tender_model->get_detail_tender($id);
             
             if (!$tender_data) {
                 $this->session->set_flashdata('error', 'Data tender tidak ditemukan.');

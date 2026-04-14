@@ -217,8 +217,8 @@ class Sekretariat extends MX_Controller {
     }
 
     public function detail($tender_id) {
-        $this->load->model('admin/M_Tender');
-        $detail = $this->M_Tender->get_detail_tender($tender_id);
+        $this->load->model('admin/Tender_model');
+        $detail = $this->Tender_model->get_detail_tender($tender_id);
         
         if (!$detail) {
             $this->session->set_flashdata('error', 'Data tidak ditemukan!');
@@ -454,9 +454,9 @@ class Sekretariat extends MX_Controller {
     // ============================================
 
     public function manajer_teknik() {
-        $this->load->model('admin/M_Tender');
+        $this->load->model('admin/Tender_model');
         $penyedia_id = $this->input->get('penyedia_id');
-        $data['manajer_list'] = $this->M_Tender->get_all_manajer_teknik($penyedia_id);
+        $data['manajer_list'] = $this->Tender_model->get_all_manajer_teknik($penyedia_id);
         $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
         $data['selected_penyedia'] = $penyedia_id;
         $data['module'] = 'sekretariat';
@@ -546,9 +546,9 @@ class Sekretariat extends MX_Controller {
     // ============================================
 
     public function manajer_keuangan() {
-        $this->load->model('admin/M_Tender');
+        $this->load->model('admin/Tender_model');
         $penyedia_id = $this->input->get('penyedia_id');
-        $data['manajer_list'] = $this->M_Tender->get_all_manajer_keuangan($penyedia_id);
+        $data['manajer_list'] = $this->Tender_model->get_all_manajer_keuangan($penyedia_id);
         $data['penyedia_list'] = $this->Sekretariat_model->get_all_companies();
         $data['selected_penyedia'] = $penyedia_id;
         $data['module'] = 'sekretariat';
