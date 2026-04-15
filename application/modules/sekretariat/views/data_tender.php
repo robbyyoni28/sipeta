@@ -57,7 +57,7 @@
 </style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-file-invoice-dollar mr-3 text-primary"></i>Monitoring Data Tender</h1>
+    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-file-invoice-dollar mr-3 text-primary"></i>Monitoring Data Tender <?= isset($jenis_filter) && $jenis_filter == 'konsultansi' ? 'Konsultansi' : 'Konstruksi' ?></h1>
 </div>
 
 <!-- Premium Filter Section -->
@@ -126,6 +126,7 @@ $(document).ready(function() {
             "data": function(d) {
                 d.penyedia_id = $('#companyFilter').val();
                 d.tahun = $('#yearFilter').val();
+                d.jenis = '<?= isset($jenis_filter) ? $jenis_filter : "" ?>';
             }
         },
         "columns": [

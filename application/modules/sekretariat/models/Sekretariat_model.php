@@ -282,7 +282,7 @@ class Sekretariat_model extends CI_Model {
         return $this->db->trans_status();
     }
 
-    public function get_all_tenders($penyedia_id = null, $tahun = null) {
+    public function get_all_tenders($penyedia_id = null, $tahun = null, $jenis_tender = null) {
         $this->db->select('tender.*, tender.satuan_kerja as nama_tender, penyedia.nama_perusahaan, u.role as created_role,
                           (SELECT COUNT(*) FROM tender_personel_lapangan WHERE tender_id = tender.id) as jumlah_personel,
                           (SELECT COUNT(*) FROM tender_peralatan WHERE tender_id = tender.id) as jumlah_alat');
@@ -296,6 +296,13 @@ class Sekretariat_model extends CI_Model {
         if ($tahun) {
             $this->db->where('tender.tahun_anggaran', $tahun);
         }
+        if ($jenis_tender) {
+            if ($jenis_tender == 'konsultansi') {
+                $this->db->where('is_konsultansi', 1);
+            } else {
+                $this->db->where('is_konsultansi', 0);
+            }
+        }
 
         $this->db->order_by('tender.id', 'DESC');
         return $this->db->get()->result();
@@ -308,6 +315,10 @@ class Sekretariat_model extends CI_Model {
                                    ->where('tender.id', $tender_id)
                                    ->get()->row();
         
+        $data['manajer_proyek'] = $this->db->get_where('manajer_proyek', ['tender_id' => $tender_id])->result();
+        $data['manajer_teknik'] = $this->db->get_where('manajer_teknik', ['tender_id' => $tender_id])->result();
+        $data['manajer_keuangan'] = $this->db->get_where('manajer_keuangan', ['tender_id' => $tender_id])->result();
+
         $data['personel'] = $this->db->select('personel_lapangan.*')
                                      ->from('tender_personel_lapangan')
                                      ->join('personel_lapangan', 'tender_personel_lapangan.personel_lapangan_id = personel_lapangan.id', 'left')

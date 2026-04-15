@@ -12,10 +12,16 @@ class Tender_model extends CI_Model {
      * Get detail tender dengan semua relasi
      */
     public function get_detail_tender($tender_id) {
-        // Get basic tender info
-        $tender = $this->db->select('t.*, p.nama_perusahaan')
+        // Get basic tender info with LEFT JOIN to managers
+        $tender = $this->db->select('t.*, p.nama_perusahaan, 
+                                   mp.nama as mp_nama, mp.nik as mp_nik, mp.jenis_skk as mp_jenis_skk, mp.nomor_skk as mp_nomor_skk, mp.masa_berlaku_skk as mp_masa_berlaku_skk,
+                                   mt.nama as mt_nama, mt.nik as mt_nik, mt.jenis_skk as mt_jenis_skk, mt.nomor_skk as mt_nomor_skk, mt.masa_berlaku_skk as mt_masa_berlaku_skk,
+                                   mk.nama as mk_nama, mk.nik as mk_nik, mk.jenis_skk as mk_jenis_skk, mk.nomor_skk as mk_nomor_skk, mk.masa_berlaku_skk as mk_masa_berlaku_skk')
                           ->from('tender t')
                           ->join('penyedia p', 'p.id = t.penyedia_id', 'left')
+                          ->join('manajer_proyek mp', 'mp.tender_id = t.id', 'left')
+                          ->join('manajer_teknik mt', 'mt.tender_id = t.id', 'left')
+                          ->join('manajer_keuangan mk', 'mk.tender_id = t.id', 'left')
                           ->where('t.id', $tender_id)
                           ->get()
                           ->row();
@@ -48,32 +54,34 @@ class Tender_model extends CI_Model {
                               ->get()
                               ->result();
 
-        // Get Manajer Teknik dari tabel manajer_teknik (prioritas: by NIK lalu by penyedia_id)
-        $manajer_teknik = [];
-        if (!empty($tender->nik_manajer_teknik)) {
-            $mt = $this->db->get_where('manajer_teknik', ['nik' => $tender->nik_manajer_teknik])->row();
-            if ($mt) $manajer_teknik[] = $mt;
-        }
-        // Fallback: ambil semua manajer teknik berdasarkan penyedia_id jika NIK kosong
-        if (empty($manajer_teknik) && !empty($tender->penyedia_id)) {
-            $mts = $this->db->get_where('manajer_teknik', ['penyedia_id' => $tender->penyedia_id])->result();
-            $manajer_teknik = $mts ?: [];
-        }
+        // Use data from join
+        $manajer_proyek = $tender->mp_nama ? [(object)[
+            'nama' => $tender->mp_nama,
+            'nik' => $tender->mp_nik,
+            'jenis_skk' => $tender->mp_jenis_skk,
+            'nomor_skk' => $tender->mp_nomor_skk,
+            'masa_berlaku_skk' => $tender->mp_masa_berlaku_skk
+        ]] : [];
 
-        // Get Manajer Keuangan dari tabel manajer_keuangan (prioritas: by NIK lalu by penyedia_id)
-        $manajer_keuangan = [];
-        if (!empty($tender->nik_manajer_keuangan)) {
-            $mk = $this->db->get_where('manajer_keuangan', ['nik' => $tender->nik_manajer_keuangan])->row();
-            if ($mk) $manajer_keuangan[] = $mk;
-        }
-        // Fallback: ambil semua manajer keuangan berdasarkan penyedia_id jika NIK kosong
-        if (empty($manajer_keuangan) && !empty($tender->penyedia_id)) {
-            $mks = $this->db->get_where('manajer_keuangan', ['penyedia_id' => $tender->penyedia_id])->result();
-            $manajer_keuangan = $mks ?: [];
-        }
+        $manajer_teknik = $tender->mt_nama ? [(object)[
+            'nama' => $tender->mt_nama,
+            'nik' => $tender->mt_nik,
+            'jenis_skk' => $tender->mt_jenis_skk,
+            'nomor_skk' => $tender->mt_nomor_skk,
+            'masa_berlaku_skk' => $tender->mt_masa_berlaku_skk
+        ]] : [];
+
+        $manajer_keuangan = $tender->mk_nama ? [(object)[
+            'nama' => $tender->mk_nama,
+            'nik' => $tender->mk_nik,
+            'jenis_skk' => $tender->mk_jenis_skk,
+            'nomor_skk' => $tender->mk_nomor_skk,
+            'masa_berlaku_skk' => $tender->mk_masa_berlaku_skk
+        ]] : [];
 
         return [
             'tender' => $tender,
+            'manajer_proyek' => $manajer_proyek,
             'manajer_teknik' => $manajer_teknik,
             'manajer_keuangan' => $manajer_keuangan,
             'personel_lapangan' => $personel_lapangan,
@@ -290,6 +298,12 @@ class Tender_model extends CI_Model {
                            ->get('tender')
                            ->row();
         return $result ? $result->penyedia_id : null;
+    }
+
+    public function insert_tender($data) {
+        $data['created_by'] = $this->session->userdata('username');
+        $this->db->insert('tender', $data);
+        return $this->db->insert_id();
     }
 
     /**

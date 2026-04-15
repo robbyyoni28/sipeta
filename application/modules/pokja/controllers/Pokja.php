@@ -10,6 +10,7 @@ class Pokja extends MX_Controller {
             redirect('auth');
         }
         $this->load->model('Pokja_model');
+        $this->load->model('admin/Tender_model', 'M_tender');
         $this->load->model('sekretariat/Sekretariat_model');
         $this->load->model('penyedia/Penyedia_model');
         $this->load->model('sekretariat/Personel_lapangan_model');
@@ -41,6 +42,7 @@ class Pokja extends MX_Controller {
         }
 
         $data['tender'] = $detail['tender'];
+        $data['manajer_proyek'] = $detail['manajer_proyek'];
         $data['manajer_teknik'] = $detail['manajer_teknik'];
         $data['manajer_keuangan'] = $detail['manajer_keuangan'];
         $data['personel_lapangan'] = $detail['personel_lapangan'];
@@ -181,7 +183,9 @@ class Pokja extends MX_Controller {
     }
 
     public function data_tender() {
-        $data['tenders'] = $this->Sekretariat_model->get_all_tenders();
+        $jenis = $this->input->get('jenis');
+        $data['tenders'] = $this->Sekretariat_model->get_all_tenders(null, null, $jenis);
+        $data['jenis_filter'] = $jenis;
         $this->load->view('layout/header');
         $this->load->view('sekretariat/data_tender', $data);
         $this->load->view('layout/footer');
@@ -352,17 +356,33 @@ class Pokja extends MX_Controller {
     public function simpan_pemenang() {
         $jenis_tender = $this->input->post('jenis_tender');
         $hps_input = $this->input->post('hps');
+        $hps_val = str_replace(',', '.', str_replace('.', '', $hps_input));
+
+        // 1. Find or Create Penyedia
+        $nama_penyedia = $this->input->post('nama_penyedia');
+        $penyedia = $this->db->get_where('penyedia', ['nama_perusahaan' => $nama_penyedia])->row();
+        if ($penyedia) {
+            $penyedia_id = $penyedia->id;
+        } else {
+            $this->db->insert('penyedia', [
+                'nama_perusahaan' => $nama_penyedia,
+                'created_by' => $this->session->userdata('username')
+            ]);
+            $penyedia_id = $this->db->insert_id();
+        }
 
         $tender_data = [
-            'nama_penyedia' => $this->input->post('nama_penyedia'),
+            'penyedia_id' => $penyedia_id,
+            'pemenang_tender' => $nama_penyedia,
             'kode_tender' => $this->input->post('kode_tender'),
             'satuan_kerja' => $this->input->post('satuan_kerja'),
             'judul_paket' => $this->input->post('judul_paket'),
             'nama_pokmil' => $this->input->post('nama_pokmil'),
-            'tanggal_bahp' => $this->input->post('tanggal_bahp'),
-            'hps' => str_replace(',', '.', str_replace('.', '', $hps_input)),
-            'kualifikasi' => $this->input->post('kualifikasi'),
-            'tahun_anggaran' => $this->input->post('tahun_anggaran') ? $this->input->post('tahun_anggaran') : date('Y')
+            'tanggal_bahp' => $this->_normalize_date_internal($this->input->post('tanggal_bahp')),
+            'hps' => $hps_val,
+            'segmentasi' => $this->input->post('kualifikasi') ?: 'Kecil',
+            'is_konsultansi' => ($this->input->post('jenis_tender') == 'konsultansi' ? 1 : 0),
+            'tahun_anggaran' => $this->input->post('tahun_anggaran') ?: date('Y')
         ];
 
         // Looping Bersih Personel Lapangan
@@ -370,7 +390,7 @@ class Pokja extends MX_Controller {
         $raw_lapangan = $this->input->post('personel_lapangan');
         if (!empty($raw_lapangan) && is_array($raw_lapangan)) {
             foreach ($raw_lapangan as $p) {
-                if (!empty(trim($p['nama'])) && !empty(trim($p['nik']))) {
+                if (!empty(trim($p['nama'] ?? '')) && !empty(trim($p['nik'] ?? ''))) {
                     $personel_lapangan[] = $p;
                 }
             }
@@ -381,7 +401,7 @@ class Pokja extends MX_Controller {
         $raw_k3 = $this->input->post('personel_k3');
         if (!empty($raw_k3) && is_array($raw_k3)) {
             foreach ($raw_k3 as $pk) {
-                if (!empty(trim($pk['nama'])) && !empty(trim($pk['nik']))) {
+                if (!empty(trim($pk['nama'] ?? '')) && !empty(trim($pk['nik'] ?? ''))) {
                     $personel_k3[] = $pk;
                 }
             }
@@ -400,49 +420,159 @@ class Pokja extends MX_Controller {
             }
         }
 
-        // ── Manajer Teknik & Keuangan dari POST terpisah (bukan dari personel_lapangan)
+        // Manajer Data
         $raw_mt = $this->input->post('manajer_teknik');
         $raw_mk = $this->input->post('manajer_keuangan');
         $manajer_teknik  = (!empty($raw_mt['nama']) && !empty($raw_mt['nik'])) ? $raw_mt : null;
         $manajer_keuangan = (!empty($raw_mk['nama']) && !empty($raw_mk['nik'])) ? $raw_mk : null;
 
-        // ── Isi kolom referensi di tabel tender
-        $tender_data['manajer_teknik']       = $manajer_teknik['nama']  ?? null;
-        $tender_data['nik_manajer_teknik']   = $manajer_teknik['nik']   ?? null;
-        $tender_data['manajer_keuangan']     = $manajer_keuangan['nama'] ?? null;
-        $tender_data['nik_manajer_keuangan'] = $manajer_keuangan['nik']  ?? null;
-
-        // ── Personel Lapangan dari personel_lapangan[0] disimpan di kolom legacy manajer_proyek
-        $tender_data['manajer_proyek']     = $personel_lapangan[0]['nama'] ?? null;
-        $tender_data['nik_manajer_proyek'] = $personel_lapangan[0]['nik']  ?? null;
-        $tender_data['ahli_k3']     = $personel_k3[0]['nama'] ?? null;
-        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik']  ?? null;
-
-        $force_save = $this->input->post('force_save') === '1';
-        if (!$force_save) {
+        // Duplicate Check
+        if ($this->input->post('force_save') !== '1') {
             $duplicates = $this->_get_bulk_duplicates_internal($personel_lapangan, $personel_k3, $peralatan, $tender_data['kode_tender'], $tender_data['tahun_anggaran']);
             if (!empty($duplicates)) {
-                $this->output
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode([
-                        'status' => 'duplicate', 
-                        'duplicates' => $duplicates,
-                        'csrfHash' => $this->security->get_csrf_hash()
-                    ]));
+                $this->output->set_content_type('application/json')->set_output(json_encode([
+                    'status' => 'duplicate', 
+                    'duplicates' => $duplicates,
+                    'csrfHash' => $this->security->get_csrf_hash()
+                ]));
                 return;
             }
         }
 
-        if ($this->Sekretariat_model->save_winner_package($tender_data, $personel_lapangan, $personel_k3, $peralatan, $manajer_teknik, $manajer_keuangan)) {
-            $this->output
-                ->set_content_type('application/json')
-                ->set_output(json_encode(['status' => 'success', 'message' => 'Paket Pemenang Berhasil Disimpan.']));
+        // ── INSERT TENDER FIRST
+        $tender_id = $this->M_tender->insert_tender($tender_data);
+
+        if ($tender_id) {
+            // ── SAVE MANAGERS
+            // 1. Manajer Proyek (From first personnel in array)
+            if (!empty($personel_lapangan)) {
+                $mp = $personel_lapangan[0];
+                $this->db->insert('manajer_proyek', [
+                    'tender_id' => $tender_id,
+                    'penyedia_id' => $penyedia_id,
+                    'nama' => $mp['nama'],
+                    'nik' => $mp['nik'],
+                    'jenis_skk' => $mp['jenis_skk'] ?? null,
+                    'nomor_skk' => $mp['nomor_skk'] ?? null,
+                    'masa_berlaku_skk' => $this->_normalize_date_internal($mp['masa_berlaku_skk'] ?? null),
+                    'created_by' => $this->session->userdata('username')
+                ]);
+                
+                // Update legacy columns in tender table
+                $this->db->where('id', $tender_id)->update('tender', [
+                    'manajer_proyek' => $mp['nama'],
+                    'nik_manajer_proyek' => $mp['nik']
+                ]);
+            }
+
+            // 2. Manajer Teknik
+            if ($manajer_teknik) {
+                $this->db->insert('manajer_teknik', [
+                    'tender_id' => $tender_id,
+                    'penyedia_id' => $penyedia_id,
+                    'nama' => $manajer_teknik['nama'],
+                    'nik' => $manajer_teknik['nik'],
+                    'jenis_skk' => $manajer_teknik['jenis_skk'] ?? null,
+                    'nomor_skk' => $manajer_teknik['nomor_skk'] ?? null,
+                    'masa_berlaku_skk' => $this->_normalize_date_internal($manajer_teknik['masa_berlaku_skk'] ?? null),
+                    'created_by' => $this->session->userdata('username')
+                ]);
+                
+                $this->db->where('id', $tender_id)->update('tender', [
+                    'manajer_teknik' => $manajer_teknik['nama'],
+                    'nik_manajer_teknik' => $manajer_teknik['nik']
+                ]);
+            }
+
+            // 3. Manajer Keuangan
+            if ($manajer_keuangan) {
+                $this->db->insert('manajer_keuangan', [
+                    'tender_id' => $tender_id,
+                    'penyedia_id' => $penyedia_id,
+                    'nama' => $manajer_keuangan['nama'],
+                    'nik' => $manajer_keuangan['nik'],
+                    'jenis_skk' => $manajer_keuangan['jenis_skk'] ?? null,
+                    'nomor_skk' => $manajer_keuangan['nomor_skk'] ?? null,
+                    'masa_berlaku_skk' => $this->_normalize_date_internal($manajer_keuangan['masa_berlaku_skk'] ?? null),
+                    'created_by' => $this->session->userdata('username')
+                ]);
+
+                $this->db->where('id', $tender_id)->update('tender', [
+                    'manajer_keuangan' => $manajer_keuangan['nama'],
+                    'nik_manajer_keuangan' => $manajer_keuangan['nik']
+                ]);
+            }
+
+            // 4. Personel K3
+            if (!empty($personel_k3)) {
+                foreach ($personel_k3 as $pk) {
+                    // Check if exists in master
+                    $existing = $this->db->get_where('personel_k3', ['nik' => $pk['nik']])->row();
+                    if ($existing) {
+                        $p_id = $existing->id;
+                    } else {
+                        $this->db->insert('personel_k3', [
+                            'penyedia_id' => $penyedia_id,
+                            'nama' => $pk['nama'],
+                            'nik' => $pk['nik'],
+                            'jabatan_k3' => $pk['jabatan_k3'] ?? 'Ahli K3 Konstruksi',
+                            'jenis_sertifikat_k3' => $pk['jenis_sertifikat_k3'] ?? null,
+                            'nomor_sertifikat_k3' => $pk['nomor_sertifikat_k3'] ?? null,
+                            'masa_berlaku_sertifikat' => $this->_normalize_date_internal($pk['masa_berlaku_sertifikat'] ?? null),
+                            'created_by' => $this->session->userdata('username')
+                        ]);
+                        $p_id = $this->db->insert_id();
+                    }
+                    $this->db->insert('tender_personel_k3', ['tender_id' => $tender_id, 'personel_k3_id' => $p_id]);
+                }
+                
+                // Update legacy columns
+                $this->db->where('id', $tender_id)->update('tender', [
+                    'ahli_k3' => $personel_k3[0]['nama'],
+                    'nik_ahli_k3' => $personel_k3[0]['nik']
+                ]);
+            }
+
+            // 5. Personel Lapangan (Rest of the list)
+            if (!empty($personel_lapangan)) {
+                foreach ($personel_lapangan as $idx => $pl) {
+                    $existing = $this->db->get_where('personel_lapangan', ['nik' => $pl['nik']])->row();
+                    if ($existing) {
+                        $p_id = $existing->id;
+                    } else {
+                        $this->db->insert('personel_lapangan', [
+                            'penyedia_id' => $penyedia_id,
+                            'nama' => $pl['nama'],
+                            'nik' => $pl['nik'],
+                            'jabatan' => $pl['jabatan'] ?? 'Pelaksana',
+                            'jenis_skk' => $pl['jenis_skk'] ?? null,
+                            'nomor_skk' => $pl['nomor_skk'] ?? null,
+                            'masa_berlaku_skk' => $this->_normalize_date_internal($pl['masa_berlaku_skk'] ?? null),
+                            'created_by' => $this->session->userdata('username')
+                        ]);
+                        $p_id = $this->db->insert_id();
+                    }
+                    $this->db->insert('tender_personel_lapangan', ['tender_id' => $tender_id, 'personel_lapangan_id' => $p_id]);
+                }
+            }
+
+            // 6. Peralatan
+            if (!empty($peralatan)) {
+                $this->M_tender->save_batch_peralatan($tender_id, $peralatan);
+            }
+
+            $this->output->set_content_type('application/json')->set_output(json_encode(['status' => 'success', 'message' => 'Data Pemenang Tender Berhasil Disimpan.']));
             return;
         }
 
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data pemenang.']));
+        $this->output->set_content_type('application/json')->set_output(json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data.']));
+    }
+
+    private function _normalize_date_internal($value) {
+        if (!$value) return null;
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) return $value;
+        $dt = DateTime::createFromFormat('d/m/Y', $value);
+        return $dt ? $dt->format('Y-m-d') : null;
     }
 
     private function _get_bulk_duplicates_internal($personel_lapangan, $personel_k3, $peralatan, $kode_tender, $tahun) {
@@ -1076,7 +1206,8 @@ class Pokja extends MX_Controller {
     public function data_tender_json() {
         $penyedia_id = $this->input->get('penyedia_id');
         $tahun = $this->input->get('tahun');
-        $data = $this->Sekretariat_model->get_all_tenders($penyedia_id, $tahun);
+        $jenis = $this->input->get('jenis');
+        $data = $this->Sekretariat_model->get_all_tenders($penyedia_id, $tahun, $jenis);
         echo json_encode(['data' => $data]);
     }
 

@@ -459,46 +459,50 @@
         }
     </style>
 </head>
+<?php $module = $this->uri->segment(1); ?>
 <body>
     <div id="wrapper">
         <nav id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-brand">
-                    <i class="fas fa-search-dollar mr-2"></i> POKJA PANEL
+                    <i class="fas fa-search-dollar mr-2"></i> <?= strtoupper($module) ?> PANEL
                 </div>
             </div>
 
             <ul class="list-unstyled components mt-3">
                 <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/input_pemenang') ?>"><i class="far fa-star mr-2"></i> PEMENANG TENDER</a>
+                    <a href="<?= base_url($module.'/input_pemenang') ?>"><i class="far fa-star mr-2"></i> TENDER KONSTRUKSI</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> TENDER KONSULTANSI</a>
+                    <a href="<?= base_url($module.'/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> TENDER KONSULTANSI</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'manajer_teknik' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/manajer_teknik') ?>"><i class="fas fa-user-cog mr-2"></i> MANAJER TEKNIK</a>
+                    <a href="<?= base_url($module.'/manajer_teknik') ?>"><i class="fas fa-user-cog mr-2"></i> MANAJER TEKNIK</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'manajer_keuangan' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i> MANAJER KEUANGAN</a>
+                    <a href="<?= base_url($module.'/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i> MANAJER KEUANGAN</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i> PERSONEL LAPANGAN</a>
+                    <a href="<?= base_url($module.'/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i> PERSONEL LAPANGAN</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_k3' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/personel_k3') ?>"><i class="fas fa-briefcase-medical mr-2"></i> PERSONEL K3</a>
+                    <a href="<?= base_url($module.'/personel_k3') ?>"><i class="fas fa-briefcase-medical mr-2"></i> PERSONEL K3</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'peralatan' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/peralatan') ?>"><i class="fas fa-truck-pickup mr-2"></i> PERALATAN</a>
+                    <a href="<?= base_url($module.'/peralatan') ?>"><i class="fas fa-truck-pickup mr-2"></i> PERALATAN</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'pemilik_alat' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/pemilik_alat') ?>"><i class="fas fa-truck mr-2"></i> PEMILIK ALAT</a>
+                    <a href="<?= base_url($module.'/pemilik_alat') ?>"><i class="fas fa-truck mr-2"></i> PEMILIK ALAT</a>
                 </li>
-                <li class="<?= $this->uri->segment(2) == 'data_tender' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/data_tender') ?>"><i class="fas fa-file-contract mr-2"></i> DATA TENDER</a>
+                <li class="<?= $this->uri->segment(2) == 'data_tender' && $this->input->get('jenis') != 'konsultansi' ? 'active' : '' ?>">
+                    <a href="<?= base_url($module.'/data_tender?jenis=konstruksi') ?>"><i class="fas fa-file-contract mr-2"></i> MONITORING KONSTRUKSI</a>
+                </li>
+                <li class="<?= $this->uri->segment(2) == 'data_tender' && $this->input->get('jenis') == 'konsultansi' ? 'active' : '' ?>">
+                    <a href="<?= base_url($module.'/data_tender?jenis=konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> DETAIL TENDER KONSULTANSI</a>
                 </li>
 
                 <li class="<?= $this->uri->segment(2) == 'daftar_perusahaan' || $this->uri->segment(2) == 'manage' ? 'active' : '' ?>">
-                    <a href="<?= base_url('pokja/daftar_perusahaan') ?>"><i class="fas fa-address-card mr-2"></i> DATA PERUSAHAAN</a>
+                    <a href="<?= base_url($module.'/daftar_perusahaan') ?>"><i class="fas fa-address-card mr-2"></i> DATA PERUSAHAAN</a>
                 </li>
                 <!-- Menu REGULASI sementara dinonaktifkan -->
             </ul>
