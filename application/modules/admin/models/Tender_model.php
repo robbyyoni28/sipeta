@@ -157,91 +157,19 @@ class Tender_model extends CI_Model {
      * Delete all peralatan links by tender_id (junction table).
      * This is the safest approach to keep UI == DB state.
      */
-    public function delete_peralatan_by_tender($tender_id) {
+    public function hapus_peralatan_by_tender($tender_id) {
         return $this->db->where('tender_id', (int)$tender_id)->delete('tender_peralatan');
     }
 
-    /**
-     * Insert current equipment set for a tender using delete-then-insert.
-     *
-     * Rules:
-     * - If `peralatan[id]` is present (existing master equipment id), update that master row.
-     * - Else, if `plat_serial` is present, try to reuse master equipment by (penyedia_id + plat_serial).
-     * - Else (plat_serial empty), always create a NEW master equipment row to avoid accidental overwrite.
-     */
-    public function insert_batch_peralatan($tender_id, $peralatan_data) {
-        $tender_id = (int)$tender_id;
-        if (empty($peralatan_data) || !is_array($peralatan_data)) return TRUE;
+    public function delete_peralatan_by_tender($tender_id) {
+        return $this->hapus_peralatan_by_tender($tender_id);
+    }
 
-        $penyedia_row = $this->db->select('penyedia_id')->where('id', $tender_id)->get('tender')->row();
-        $penyedia_id = $penyedia_row ? (int)$penyedia_row->penyedia_id : 0;
-
-        $batch_insert = [];
-
-        foreach ($peralatan_data as $peralatan) {
-            $jenis_alat = trim((string)($peralatan['jenis_alat'] ?? ''));
-            if ($jenis_alat === '') continue;
-
-            $master_id = (int)($peralatan['id'] ?? 0);
-            $plat_serial = trim((string)($peralatan['plat_serial'] ?? ''));
-
-            $master_payload = [
-                'penyedia_id'        => $penyedia_id,
-                'nama_alat'          => trim((string)($peralatan['nama_alat'] ?? '')),
-                'merk'               => trim((string)($peralatan['merk'] ?? '')),
-                'tipe'               => trim((string)($peralatan['tipe'] ?? '')),
-                'kapasitas'          => trim((string)($peralatan['kapasitas'] ?? '')),
-                'plat_serial'        => $plat_serial,
-                'jenis_alat'         => $jenis_alat,
-                'tahun_pembuatan'    => trim((string)($peralatan['tahun_pembuatan'] ?? '')),
-                'status_kepemilikan' => trim((string)($peralatan['status_kepemilikan'] ?? '')) ?: 'Milik Sendiri',
-            ];
-
-            /**
-             * IMPORTANT:
-             * In tender edit UI, it's common to have multiple rows that point to the same master `peralatan.id`
-             * (e.g. user adds 3 rows "POMPA AIR" but they came from one master record).
-             * If we update master by `id` while `plat_serial` is empty, one row edit can overwrite others.
-             *
-             * Therefore:
-             * - Only update/reuse master when `plat_serial` is provided (stable identity).
-             * - If `plat_serial` is empty, always create a NEW master record for that row.
-             */
-            if ($plat_serial !== '') {
-                // Prefer using provided master_id when present, but keep it scoped to same penyedia_id.
-                if ($master_id > 0) {
-                    $this->db->where('id', $master_id)->where('penyedia_id', $penyedia_id)->update('peralatan', $master_payload);
-                } else {
-                    $existing = $this->db->where('penyedia_id', $penyedia_id)
-                                         ->where('plat_serial', $plat_serial)
-                                         ->get('peralatan')
-                                         ->row();
-                    if ($existing) {
-                        $master_id = (int)$existing->id;
-                        $this->db->where('id', $master_id)->update('peralatan', $master_payload);
-                    }
-                }
-            } else {
-                // Force new master record when no serial/plate is provided.
-                $master_id = 0;
-            }
-
-            if ($master_id <= 0) {
-                $master_payload['created_by'] = $this->session->userdata('username');
-                $this->db->insert('peralatan', $master_payload);
-                $master_id = (int)$this->db->insert_id();
-            }
-
-            $batch_insert[] = [
-                'tender_id'    => $tender_id,
-                'peralatan_id' => $master_id,
-                'jumlah'       => (int)($peralatan['jumlah'] ?? 1),
-                'keterangan'   => isset($peralatan['keterangan']) ? trim((string)$peralatan['keterangan']) : null,
-            ];
+    public function simpan_batch_peralatan($data) {
+        if (empty($data) || !is_array($data)) {
+            return TRUE;
         }
-
-        if (empty($batch_insert)) return TRUE;
-        return $this->db->insert_batch('tender_peralatan', $batch_insert);
+        return $this->db->insert_batch('tender_peralatan', $data);
     }
 
     /**

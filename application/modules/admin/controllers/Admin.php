@@ -307,10 +307,7 @@ class Admin extends MX_Controller {
             }
         }
 
-        // Proses update peralatan (selalu proses, termasuk jika kosong)
-        $peralatan_data = $this->input->post('peralatan');
-        error_log('update_tender - peralatan_data: ' . print_r($peralatan_data, true));
-        $this->update_peralatan($id, is_array($peralatan_data) ? $peralatan_data : []);
+        $this->sync_peralatan_tender_from_post((int)$id);
 
         // Proses update personel lapangan (selalu proses, termasuk jika kosong)
         $personel_lapangan_data = $this->input->post('personel_lapangan');
@@ -341,23 +338,75 @@ class Admin extends MX_Controller {
     }
 
     /**
-     * Sinkronisasi peralatan tender (delete-then-insert) supaya data tidak tertukar saat indeks berubah.
-     * NOTE: Hindari dedup berbasis plat_serial bila kosong, karena dapat membuat beberapa item menimpa 1 record master.
+     * Hapus semua tender_peralatan, lalu insert ulang dari array paralel (tanpa id, tanpa update per baris).
      */
-    public function update_peralatan($tender_id, $peralatan_data = []) {
+    private function sync_peralatan_tender_from_post($tender_id) {
         $tender_id = (int)$tender_id;
-
         $this->db->trans_start();
+        $this->M_tender->hapus_peralatan_by_tender($tender_id);
 
-        // Always delete all existing junction rows first
-        $this->M_tender->delete_peralatan_by_tender($tender_id);
-
-        if (!empty($peralatan_data) && is_array($peralatan_data)) {
-            $this->M_tender->insert_batch_peralatan($tender_id, $peralatan_data);
+        $jenis_alat = $this->input->post('jenis_alat');
+        if (!is_array($jenis_alat)) {
+            $this->db->trans_complete();
+            return;
         }
 
+        $tender_row = $this->db->get_where('tender', ['id' => $tender_id])->row();
+        $penyedia_id = $tender_row ? (int)$tender_row->penyedia_id : 0;
+
+        $nama_alat = $this->input->post('nama_alat');
+        $merk = $this->input->post('merk');
+        $tipe = $this->input->post('tipe');
+        $kapasitas = $this->input->post('kapasitas');
+        $plat_serial = $this->input->post('plat_serial');
+        $tahun_pembuatan = $this->input->post('tahun_pembuatan');
+        $status_kepemilikan = $this->input->post('status_kepemilikan');
+        $jumlah = $this->input->post('jumlah');
+
+        $batch_tp = [];
+        $username = $this->session->userdata('username');
+
+        foreach ($jenis_alat as $i => $ja) {
+            $ja = trim((string)$ja);
+            if ($ja === '') {
+                continue;
+            }
+            $na = trim((string)($nama_alat[$i] ?? ''));
+            if ($na === '') {
+                $na = $ja;
+            }
+            $stat = trim((string)($status_kepemilikan[$i] ?? ''));
+            if (!in_array($stat, ['Milik Sendiri', 'Sewa', 'Kerjasama'], true)) {
+                $stat = 'Milik Sendiri';
+            }
+            $thn = isset($tahun_pembuatan[$i]) && $tahun_pembuatan[$i] !== '' ? (int)$tahun_pembuatan[$i] : null;
+
+            $row_master = [
+                'penyedia_id' => $penyedia_id,
+                'nama_alat' => $na,
+                'merk' => trim((string)($merk[$i] ?? '')) ?: null,
+                'tipe' => trim((string)($tipe[$i] ?? '')) ?: null,
+                'kapasitas' => trim((string)($kapasitas[$i] ?? '')) ?: null,
+                'plat_serial' => trim((string)($plat_serial[$i] ?? '')) ?: null,
+                'jenis_alat' => $ja,
+                'tahun_pembuatan' => $thn,
+                'status_kepemilikan' => $stat,
+                'created_by' => $username,
+            ];
+            $this->db->insert('peralatan', $row_master);
+            $pid = (int)$this->db->insert_id();
+            $batch_tp[] = [
+                'tender_id' => $tender_id,
+                'peralatan_id' => $pid,
+                'jumlah' => max(1, (int)($jumlah[$i] ?? 1)),
+                'keterangan' => null,
+            ];
+        }
+
+        if (!empty($batch_tp)) {
+            $this->M_tender->simpan_batch_peralatan($batch_tp);
+        }
         $this->db->trans_complete();
-        return $this->db->trans_status();
     }
 
     private function update_tender_personel_lapangan($tender_id, $personel_data) {

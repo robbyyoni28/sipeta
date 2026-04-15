@@ -372,36 +372,61 @@
                                 </tr>
                             </thead>
                             <tbody id="peralatan-tbody">
-                                <?php $i = 0; foreach ($peralatan as $p): $i++; ?>
+                                <?php
+                                $rows = !empty($peralatan) ? $peralatan : [null];
+                                $i = 0;
+                                foreach ($rows as $p):
+                                    $i++;
+                                ?>
                                 <tr>
-                                    <td><?= $i ?></td>
+                                    <td class="peralatan-no"><?= $i ?></td>
+                                    <td><input type="text" name="jenis_alat[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->jenis_alat) : '' ?>" required></td>
+                                    <td><input type="text" name="nama_alat[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->nama_alat) : '' ?>"></td>
+                                    <td><input type="text" name="merk[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->merk) : '' ?>"></td>
+                                    <td><input type="text" name="tipe[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->tipe) : '' ?>"></td>
+                                    <td><input type="text" name="kapasitas[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->kapasitas) : '' ?>"></td>
+                                    <td><input type="text" name="plat_serial[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->plat_serial) : '' ?>"></td>
+                                    <td><input type="number" name="tahun_pembuatan[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->tahun_pembuatan) : '' ?>"></td>
                                     <td>
-                                        <input type="hidden" name="peralatan[<?= $i-1 ?>][id]" value="<?= $p->id ?>">
-                                        <input type="text" name="peralatan[<?= $i-1 ?>][jenis_alat]" class="form-control form-control-sm" value="<?= html_escape($p->jenis_alat) ?>" required>
-                                    </td>
-                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][nama_alat]" class="form-control form-control-sm" value="<?= html_escape($p->nama_alat) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][merk]" class="form-control form-control-sm" value="<?= html_escape($p->merk) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][tipe]" class="form-control form-control-sm" value="<?= html_escape($p->tipe) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][kapasitas]" class="form-control form-control-sm" value="<?= html_escape($p->kapasitas) ?>"></td>
-                                    <td><input type="text" name="peralatan[<?= $i-1 ?>][plat_serial]" class="form-control form-control-sm" value="<?= html_escape($p->plat_serial) ?>"></td>
-                                    <td><input type="number" name="peralatan[<?= $i-1 ?>][tahun_pembuatan]" class="form-control form-control-sm" value="<?= html_escape($p->tahun_pembuatan) ?>"></td>
-                                    <td>
-                                        <select name="peralatan[<?= $i-1 ?>][status_kepemilikan]" class="form-control form-control-sm">
-                                            <option value="Milik Sendiri" <?= $p->status_kepemilikan == 'Milik Sendiri' ? 'selected' : '' ?>>Milik Sendiri</option>
-                                            <option value="Sewa" <?= $p->status_kepemilikan == 'Sewa' ? 'selected' : '' ?>>Sewa</option>
-                                            <option value="Kerjasama" <?= $p->status_kepemilikan == 'Kerjasama' ? 'selected' : '' ?>>Kerjasama</option>
+                                        <select name="status_kepemilikan[]" class="form-control form-control-sm">
+                                            <option value="Milik Sendiri" <?= (!$p || $p->status_kepemilikan == 'Milik Sendiri') ? 'selected' : '' ?>>Milik Sendiri</option>
+                                            <option value="Sewa" <?= ($p && $p->status_kepemilikan == 'Sewa') ? 'selected' : '' ?>>Sewa</option>
+                                            <option value="Kerjasama" <?= ($p && $p->status_kepemilikan == 'Kerjasama') ? 'selected' : '' ?>>Kerjasama</option>
                                         </select>
                                     </td>
-                                    <td><input type="number" name="peralatan[<?= $i-1 ?>][jumlah]" class="form-control form-control-sm" value="<?= html_escape($p->jumlah ?? 1) ?>" min="1"></td>
-                                    <td><button type="button" class="btn btn-sm btn-danger remove-peralatan"><i class="fas fa-trash"></i></button></td>
+                                    <td><input type="number" name="jumlah[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->jumlah ?? 1) : 1 ?>" min="1"></td>
+                                    <td><button type="button" class="btn btn-sm btn-danger btn-hapus-peralatan"><i class="fas fa-trash"></i></button></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
-                    <button type="button" class="btn btn-sm btn-primary mt-2" id="add-peralatan">
+                    <button type="button" class="btn btn-sm btn-primary mt-2" id="btn-tambah-peralatan">
                         <i class="fas fa-plus mr-1"></i> Tambah Peralatan
                     </button>
+                    <table class="d-none" aria-hidden="true">
+                        <tbody id="peralatan-template-row">
+                            <tr>
+                                <td class="peralatan-no"></td>
+                                <td><input type="text" name="jenis_alat[]" class="form-control form-control-sm" value=""></td>
+                                <td><input type="text" name="nama_alat[]" class="form-control form-control-sm" value=""></td>
+                                <td><input type="text" name="merk[]" class="form-control form-control-sm" value=""></td>
+                                <td><input type="text" name="tipe[]" class="form-control form-control-sm" value=""></td>
+                                <td><input type="text" name="kapasitas[]" class="form-control form-control-sm" value=""></td>
+                                <td><input type="text" name="plat_serial[]" class="form-control form-control-sm" value=""></td>
+                                <td><input type="number" name="tahun_pembuatan[]" class="form-control form-control-sm" value=""></td>
+                                <td>
+                                    <select name="status_kepemilikan[]" class="form-control form-control-sm">
+                                        <option value="Milik Sendiri" selected>Milik Sendiri</option>
+                                        <option value="Sewa">Sewa</option>
+                                        <option value="Kerjasama">Kerjasama</option>
+                                    </select>
+                                </td>
+                                <td><input type="number" name="jumlah[]" class="form-control form-control-sm" value="1" min="1"></td>
+                                <td><button type="button" class="btn btn-sm btn-danger btn-hapus-peralatan"><i class="fas fa-trash"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -420,12 +445,8 @@
 
 <script>
 $(document).ready(function() {
-    // Initialize counters based on existing data
-    let peralatanCounter = <?= isset($peralatan) ? count($peralatan) : 0 ?>;
     let personelLapanganCounter = <?= isset($personel_lapangan) ? count($personel_lapangan) : 0 ?>;
     let personelK3Counter = <?= isset($personel_k3) ? count($personel_k3) : 0 ?>;
-    
-    console.log('Initial counters - Peralatan:', peralatanCounter, 'Personel Lapangan:', personelLapanganCounter, 'Personel K3:', personelK3Counter);
 
     // Format Rupiah - support koma desimal untuk Excel
     $('.rupiah').on('keyup', function() {
@@ -460,36 +481,6 @@ $(document).ready(function() {
                 }
             }
         }
-    });
-
-    // Add new peralatan row
-    $('#add-peralatan').click(function() {
-        // Get current row count to avoid conflicts
-        let currentRowCount = $('#peralatan-tbody tr').length;
-        
-        let newRow = `
-            <tr>
-                <td>${currentRowCount + 1}</td>
-                <td><input type="text" name="peralatan[${currentRowCount}][jenis_alat]" class="form-control form-control-sm" required></td>
-                <td><input type="text" name="peralatan[${currentRowCount}][nama_alat]" class="form-control form-control-sm"></td>
-                <td><input type="text" name="peralatan[${currentRowCount}][merk]" class="form-control form-control-sm"></td>
-                <td><input type="text" name="peralatan[${currentRowCount}][tipe]" class="form-control form-control-sm"></td>
-                <td><input type="text" name="peralatan[${currentRowCount}][kapasitas]" class="form-control form-control-sm"></td>
-                <td><input type="text" name="peralatan[${currentRowCount}][plat_serial]" class="form-control form-control-sm"></td>
-                <td><input type="number" name="peralatan[${currentRowCount}][tahun_pembuatan]" class="form-control form-control-sm"></td>
-                <td>
-                    <select name="peralatan[${currentRowCount}][status_kepemilikan]" class="form-control form-control-sm">
-                        <option value="Milik Sendiri">Milik Sendiri</option>
-                        <option value="Sewa">Sewa</option>
-                        <option value="Kerjasama">Kerjasama</option>
-                    </select>
-                </td>
-                <td><input type="number" name="peralatan[${currentRowCount}][jumlah]" class="form-control form-control-sm" value="1" min="1"></td>
-                <td><button type="button" class="btn btn-sm btn-danger remove-peralatan"><i class="fas fa-trash"></i></button></td>
-            </tr>
-        `;
-        $('#peralatan-tbody').append(newRow);
-        peralatanCounter = currentRowCount + 1;
     });
 
     // Add new personel lapangan row
@@ -535,16 +526,6 @@ $(document).ready(function() {
         personelK3Counter = currentRowCount + 1;
     });
 
-    // Remove peralatan row
-    $(document).on('click', '.remove-peralatan', function() {
-        if ($('#peralatan-tbody tr').length > 1) {
-            $(this).closest('tr').remove();
-            renumberTable('peralatan-tbody');
-        } else {
-            alert('Minimal harus ada satu peralatan!');
-        }
-    });
-
     // Remove personel lapangan row
     $(document).on('click', '.remove-personel-lapangan', function() {
         if ($('#personel-lapangan-tbody tr').length > 1) {
@@ -571,17 +552,7 @@ $(document).ready(function() {
             let newIndex = index;
             $(this).find('td:first').text(newIndex + 1);
             
-            // Update input names based on table type
-            if (tbodyId === 'peralatan-tbody') {
-                $(this).find('input[name^="peralatan["]').each(function() {
-                    let fieldName = $(this).attr('name').replace(/peralatan\[\d+\]/, 'peralatan[' + newIndex + ']');
-                    $(this).attr('name', fieldName);
-                });
-                $(this).find('select[name^="peralatan["]').each(function() {
-                    let fieldName = $(this).attr('name').replace(/peralatan\[\d+\]/, 'peralatan[' + newIndex + ']');
-                    $(this).attr('name', fieldName);
-                });
-            } else if (tbodyId === 'personel-lapangan-tbody') {
+            if (tbodyId === 'personel-lapangan-tbody') {
                 $(this).find('input[name^="personel_lapangan["]').each(function() {
                     let fieldName = $(this).attr('name').replace(/personel_lapangan\[\d+\]/, 'personel_lapangan[' + newIndex + ']');
                     $(this).attr('name', fieldName);
@@ -594,10 +565,7 @@ $(document).ready(function() {
             }
         });
         
-        // Update counters
-        if (tbodyId === 'peralatan-tbody') {
-            peralatanCounter = $('#' + tbodyId + ' tr').length;
-        } else if (tbodyId === 'personel-lapangan-tbody') {
+        if (tbodyId === 'personel-lapangan-tbody') {
             personelLapanganCounter = $('#' + tbodyId + ' tr').length;
         } else if (tbodyId === 'personel-k3-tbody') {
             personelK3Counter = $('#' + tbodyId + ' tr').length;
@@ -608,7 +576,6 @@ $(document).ready(function() {
     $('#form-edit-tender').on('submit', function(e) {
         // Log form data before submit
         console.log('Form data before submit:', $(this).serialize());
-        console.log('Peralatan count:', $('#peralatan-tbody tr').length);
         console.log('Personel Lapangan count:', $('#personel-lapangan-tbody tr').length);
         console.log('Personel K3 count:', $('#personel-k3-tbody tr').length);
         
@@ -652,4 +619,44 @@ $(document).ready(function() {
         });
     });
 });
+
+(function() {
+    function renumberPeralatanRows() {
+        var tb = document.getElementById('peralatan-tbody');
+        if (!tb) return;
+        tb.querySelectorAll('tr').forEach(function(tr, idx) {
+            var c = tr.querySelector('.peralatan-no');
+            if (c) c.textContent = String(idx + 1);
+        });
+    }
+    var btnAdd = document.getElementById('btn-tambah-peralatan');
+    var tpl = document.getElementById('peralatan-template-row');
+    var tbody = document.getElementById('peralatan-tbody');
+    if (btnAdd && tpl && tbody) {
+        btnAdd.addEventListener('click', function() {
+            var src = tpl.querySelector('tr');
+            if (!src) return;
+            var newRow = src.cloneNode(true);
+            newRow.querySelectorAll('input').forEach(function(el) { el.value = ''; });
+            newRow.querySelectorAll('select').forEach(function(sel) { sel.selectedIndex = 0; });
+            var jm = newRow.querySelector('input[name="jumlah[]"]');
+            if (jm) jm.value = '1';
+            tbody.appendChild(newRow);
+            renumberPeralatanRows();
+        });
+    }
+    document.addEventListener('click', function(e) {
+        var del = e.target.closest('.btn-hapus-peralatan');
+        if (!del) return;
+        var tr = del.closest('tr');
+        var tb = document.getElementById('peralatan-tbody');
+        if (!tb || !tr || !tb.contains(tr)) return;
+        if (tb.querySelectorAll('tr').length <= 1) {
+            alert('Minimal harus ada satu peralatan!');
+            return;
+        }
+        tr.remove();
+        renumberPeralatanRows();
+    });
+})();
 </script>
