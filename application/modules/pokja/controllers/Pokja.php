@@ -414,6 +414,9 @@ class Pokja extends MX_Controller {
             if (!empty($raw_alat) && is_array($raw_alat)) {
                 foreach ($raw_alat as $alat) {
                     if (!empty(trim($alat['jenis_alat'] ?? ''))) {
+                        if (trim((string)($alat['nama_alat'] ?? '')) === '') {
+                            $alat['nama_alat'] = trim((string)($alat['jenis_alat'] ?? ''));
+                        }
                         $peralatan[] = $alat;
                     }
                 }

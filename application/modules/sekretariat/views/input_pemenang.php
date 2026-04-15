@@ -217,7 +217,8 @@
                     <tbody>
                         <tr class="row-peralatan-template">
                             <td class="px-4 py-3 align-middle">
-                                <input type="text" name="peralatan[0][jenis_alat]" class="form-control form-control-sm bg-light border-0" placeholder="Excavator" style="border-radius: 8px;">
+                                <input type="hidden" name="peralatan[0][nama_alat]" class="peralatan-nama-alat-sync" value="">
+                                <input type="text" name="peralatan[0][jenis_alat]" class="form-control form-control-sm bg-light border-0 input-jenis-peralatan" placeholder="Excavator" style="border-radius: 8px;" autocomplete="off">
                             </td>
                             <td class="py-3 align-middle">
                                 <input type="number" name="peralatan[0][jumlah]" class="form-control form-control-sm bg-light border-0 text-center qty-peralatan" min="1" value="1" style="border-radius: 8px;">
@@ -283,6 +284,21 @@ $(document).ready(function() {
     $('.rupiah').on('keyup', function() {
         let val = $(this).val().replace(/[^0-9]/g, '');
         $(this).val(new Intl.NumberFormat('id-ID').format(val));
+    });
+
+    // Samakan nama_alat dengan jenis_alat (kolom DB NOT NULL; form hanya punya satu kolom input)
+    function syncAllPeralatanNamaAlat() {
+        $('#table-peralatan tbody tr').each(function() {
+            var $row = $(this);
+            var j = $row.find('.input-jenis-peralatan').val() || '';
+            $row.find('.peralatan-nama-alat-sync').val(j);
+        });
+    }
+    $(document).on('input change', '#table-peralatan .input-jenis-peralatan', function() {
+        $(this).closest('tr').find('.peralatan-nama-alat-sync').val($(this).val() || '');
+    });
+    $('#form-pemenang').on('submit', function() {
+        syncAllPeralatanNamaAlat();
     });
 
     // Dynamic peralatan rows
@@ -594,6 +610,7 @@ $(document).ready(function() {
     });
 
     function performAjaxSubmit(form, forceSave = false) {
+        syncAllPeralatanNamaAlat();
         let formData = new FormData(form);
         if (forceSave) {
             formData.append('force_save', '1');

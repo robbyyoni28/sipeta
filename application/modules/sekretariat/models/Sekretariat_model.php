@@ -224,7 +224,11 @@ class Sekretariat_model extends CI_Model {
         // 5. Process Peralatan with new fields
         if (!empty($peralatan)) {
             foreach ($peralatan as $pl) {
-                if (empty($pl['jenis_alat']) && empty($pl['nama_alat'])) continue;
+                $ja_pl = trim((string)($pl['jenis_alat'] ?? ''));
+                $na_pl = trim((string)($pl['nama_alat'] ?? ''));
+                if ($ja_pl === '' && $na_pl === '') {
+                    continue;
+                }
 
                 // Support new payload format: peralatan[][units][]
                 $units = [];
@@ -236,10 +240,24 @@ class Sekretariat_model extends CI_Model {
                 }
 
                 foreach ($units as $u) {
+                    $jenis = trim((string)($pl['jenis_alat'] ?? ($u['jenis_alat'] ?? '')));
+                    $nama = trim((string)($pl['nama_alat'] ?? ($u['nama_alat'] ?? '')));
+                    if ($nama === '' && $jenis !== '') {
+                        $nama = $jenis;
+                    } elseif ($nama === '' && $jenis === '') {
+                        $nama = trim((string)($u['jenis_alat'] ?? ''));
+                    }
+                    if ($jenis === '' && $nama !== '') {
+                        $jenis = $nama;
+                    }
+                    if ($nama === '') {
+                        continue;
+                    }
+
                     $peralatan_data = [
                         'penyedia_id' => $penyedia_id,
-                        'jenis_alat' => $pl['jenis_alat'] ?? ($u['jenis_alat'] ?? null),
-                        'nama_alat' => $pl['nama_alat'] ?? ($pl['jenis_alat'] ?? ($u['nama_alat'] ?? ($u['jenis_alat'] ?? null))),
+                        'jenis_alat' => $jenis !== '' ? $jenis : $nama,
+                        'nama_alat' => $nama,
                         'merk' => $u['merk'] ?? ($pl['merk'] ?? null),
                         'tipe' => $u['tipe'] ?? ($pl['tipe'] ?? null),
                         'kapasitas' => $u['kapasitas'] ?? ($pl['kapasitas'] ?? null),

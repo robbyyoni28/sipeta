@@ -154,6 +154,20 @@ class M_Admin extends CI_Model {
         return TRUE;
     }
 
+    private function merge_peralatan_units_row(array $p) {
+        if (empty($p['units']) || !is_array($p['units']) || !isset($p['units'][0]) || !is_array($p['units'][0])) {
+            return $p;
+        }
+        $u = $p['units'][0];
+        foreach (['plat_serial', 'merk', 'tipe', 'kapasitas', 'status_kepemilikan', 'tahun_pembuatan'] as $f) {
+            $top = isset($p[$f]) ? trim((string) $p[$f]) : '';
+            if ($top === '' && isset($u[$f]) && trim((string) $u[$f]) !== '') {
+                $p[$f] = $u[$f];
+            }
+        }
+        return $p;
+    }
+
     /**
      * Insert Batch Peralatan for Tender
      * 
@@ -171,21 +185,33 @@ class M_Admin extends CI_Model {
         $batch_insert = [];
         
         foreach ($peralatan_data as $peralatan) {
+            $peralatan = $this->merge_peralatan_units_row((array) $peralatan);
             // Skip if required fields are empty
-            if (empty(trim($peralatan['jenis_alat']))) {
+            if (empty(trim($peralatan['jenis_alat'] ?? ''))) {
                 continue;
             }
+
+            $nama_alat = trim((string)($peralatan['nama_alat'] ?? ''));
+            if ($nama_alat === '') {
+                $nama_alat = trim((string)($peralatan['jenis_alat'] ?? ''));
+            }
+
+            $plat_key = isset($peralatan['plat_serial']) ? trim((string) $peralatan['plat_serial']) : '';
+            $plat_key = ($plat_key === '') ? null : $plat_key;
+            $peralatan['plat_serial'] = $plat_key;
             
-            // Check if peralatan already exists in master (by plat_serial)
-            $existing = $this->db->where('plat_serial', $peralatan['plat_serial'])
-                                ->get('peralatan')
-                                ->row();
+            $existing = null;
+            if ($plat_key !== null) {
+                $existing = $this->db->where('plat_serial', $plat_key)
+                                    ->get('peralatan')
+                                    ->row();
+            }
             
             if ($existing) {
                 $peralatan_id = $existing->id;
                 // Update existing peralatan
                 $this->db->where('id', $peralatan_id)->update('peralatan', [
-                    'nama_alat' => $peralatan['nama_alat'],
+                    'nama_alat' => $nama_alat,
                     'merk' => $peralatan['merk'],
                     'tipe' => $peralatan['tipe'],
                     'kapasitas' => $peralatan['kapasitas'],
@@ -198,7 +224,7 @@ class M_Admin extends CI_Model {
                 // Insert new peralatan to master
                 $peralatan_master = [
                     'penyedia_id' => $penyedia_id,
-                    'nama_alat' => $peralatan['nama_alat'],
+                    'nama_alat' => $nama_alat,
                     'merk' => $peralatan['merk'],
                     'tipe' => $peralatan['tipe'],
                     'kapasitas' => $peralatan['kapasitas'],

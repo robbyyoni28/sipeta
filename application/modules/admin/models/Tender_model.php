@@ -92,6 +92,24 @@ class Tender_model extends CI_Model {
 
 
     /**
+     * Form input_pemenang mengirim detail unit di peralatan[n][units][0][...];
+     * satukan ke level atas agar plat/merk/status ikut tersimpan & lookup master benar.
+     */
+    private function merge_peralatan_units_row(array $p) {
+        if (empty($p['units']) || !is_array($p['units']) || !isset($p['units'][0]) || !is_array($p['units'][0])) {
+            return $p;
+        }
+        $u = $p['units'][0];
+        foreach (['plat_serial', 'merk', 'tipe', 'kapasitas', 'status_kepemilikan', 'tahun_pembuatan'] as $f) {
+            $top = isset($p[$f]) ? trim((string) $p[$f]) : '';
+            if ($top === '' && isset($u[$f]) && trim((string) $u[$f]) !== '') {
+                $p[$f] = $u[$f];
+            }
+        }
+        return $p;
+    }
+
+    /**
      * Save batch peralatan dengan logika delete-then-insert
      */
     public function save_batch_peralatan($tender_id, $peralatan_data) {
@@ -102,17 +120,30 @@ class Tender_model extends CI_Model {
 
         // Insert new peralatan
         foreach ($peralatan_data as $peralatan) {
-            if (!empty(trim($peralatan['jenis_alat']))) {
-                // Cek apakah peralatan sudah ada di master
-                $existing_peralatan = $this->db->where('plat_serial', $peralatan['plat_serial'])
-                                               ->get('peralatan')
-                                               ->row();
+            $peralatan = $this->merge_peralatan_units_row((array) $peralatan);
+            if (!empty(trim($peralatan['jenis_alat'] ?? ''))) {
+                $nama_alat = trim((string)($peralatan['nama_alat'] ?? ''));
+                if ($nama_alat === '') {
+                    $nama_alat = trim((string)($peralatan['jenis_alat'] ?? ''));
+                }
+
+                $plat_key = isset($peralatan['plat_serial']) ? trim((string) $peralatan['plat_serial']) : '';
+                $plat_key = ($plat_key === '') ? null : $plat_key;
+                $peralatan['plat_serial'] = $plat_key;
+
+                // Cek master hanya jika plat/seri diisi — jangan where(NULL) / '' (bisa kena baris lain semua NULL)
+                $existing_peralatan = null;
+                if ($plat_key !== null) {
+                    $existing_peralatan = $this->db->where('plat_serial', $plat_key)
+                                                   ->get('peralatan')
+                                                   ->row();
+                }
 
                 if ($existing_peralatan) {
                     $peralatan_id = $existing_peralatan->id;
                     // Update master peralatan jika ada perubahan
                     $this->db->where('id', $peralatan_id)->update('peralatan', [
-                        'nama_alat' => $peralatan['nama_alat'],
+                        'nama_alat' => $nama_alat,
                         'merk' => $peralatan['merk'],
                         'tipe' => $peralatan['tipe'],
                         'kapasitas' => $peralatan['kapasitas'],
@@ -124,7 +155,7 @@ class Tender_model extends CI_Model {
                     // Create new peralatan in master
                     $new_peralatan = [
                         'penyedia_id' => $this->get_penyedia_id_by_tender($tender_id),
-                        'nama_alat' => $peralatan['nama_alat'],
+                        'nama_alat' => $nama_alat,
                         'merk' => $peralatan['merk'],
                         'tipe' => $peralatan['tipe'],
                         'kapasitas' => $peralatan['kapasitas'],
