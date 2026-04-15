@@ -3,6 +3,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Admin extends MX_Controller {
 
+    public function __construct() {
+        parent::__construct();
+        if ($this->session->userdata('role') !== 'admin') {
+            redirect('auth');
+        }
         $this->load->model('Admin_model');
         $this->load->model('Tender_model', 'M_tender');
     }
@@ -1123,103 +1128,6 @@ class Admin extends MX_Controller {
         echo json_encode($result);
     }
 
-    public function simpan_pemenang() {
-        $jenis_tender = $this->input->post('jenis_tender');
-        $hps_input = $this->input->post('hps');
-
-        $tender_data = [
-            'nama_penyedia' => $this->input->post('nama_penyedia'),
-            'kode_tender' => $this->input->post('kode_tender'),
-            'satuan_kerja' => $this->input->post('satuan_kerja'),
-            'judul_paket' => $this->input->post('judul_paket'),
-            'nama_pokmil' => $this->input->post('nama_pokmil'),
-            'tanggal_bahp' => $this->input->post('tanggal_bahp'),
-            'hps' => str_replace(',', '.', str_replace('.', '', $hps_input)),
-            'kualifikasi' => $this->input->post('kualifikasi'),
-            'tahun_anggaran' => $this->input->post('tahun_anggaran') ? $this->input->post('tahun_anggaran') : date('Y')
-        ];
-
-        // Looping Bersih Personel Lapangan
-        $personel_lapangan = [];
-        $raw_lapangan = $this->input->post('personel_lapangan');
-        if (!empty($raw_lapangan) && is_array($raw_lapangan)) {
-            foreach ($raw_lapangan as $p) {
-                if (!empty(trim($p['nama'])) && !empty(trim($p['nik']))) {
-                    $personel_lapangan[] = $p;
-                }
-            }
-        }
-
-        // Looping Bersih Personel K3
-        $personel_k3 = [];
-        $raw_k3 = $this->input->post('personel_k3');
-        if (!empty($raw_k3) && is_array($raw_k3)) {
-            foreach ($raw_k3 as $pk) {
-                if (!empty(trim($pk['nama'])) && !empty(trim($pk['nik']))) {
-                    $personel_k3[] = $pk;
-                }
-            }
-        }
-
-        // Looping Bersih Peralatan
-        $peralatan = [];
-        if ($jenis_tender !== 'konsultansi') {
-            $raw_alat = $this->input->post('peralatan');
-            if (!empty($raw_alat) && is_array($raw_alat)) {
-                foreach ($raw_alat as $alat) {
-                    if (!empty(trim($alat['jenis_alat'] ?? ''))) {
-                        $peralatan[] = $alat;
-                    }
-                }
-            }
-        }
-
-        // ── Manajer Teknik & Keuangan dari POST terpisah (bukan dari personel_lapangan)
-        $raw_mt = $this->input->post('manajer_teknik');
-        $raw_mk = $this->input->post('manajer_keuangan');
-        $manajer_teknik   = (!empty($raw_mt['nama']) && !empty($raw_mt['nik'])) ? $raw_mt : null;
-        $manajer_keuangan = (!empty($raw_mk['nama']) && !empty($raw_mk['nik'])) ? $raw_mk : null;
-
-        // ── Isi kolom referensi di tabel tender
-        $tender_data['manajer_teknik']       = $manajer_teknik['nama']   ?? null;
-        $tender_data['nik_manajer_teknik']   = $manajer_teknik['nik']    ?? null;
-        $tender_data['manajer_keuangan']     = $manajer_keuangan['nama'] ?? null;
-        $tender_data['nik_manajer_keuangan'] = $manajer_keuangan['nik']  ?? null;
-
-        // ── Personel Lapangan dari personel_lapangan[0] disimpan di kolom legacy manajer_proyek
-        $tender_data['manajer_proyek']       = $personel_lapangan[0]['nama'] ?? null;
-        $tender_data['nik_manajer_proyek']   = $personel_lapangan[0]['nik']  ?? null;
-        $tender_data['ahli_k3']     = $personel_k3[0]['nama'] ?? null;
-        $tender_data['nik_ahli_k3'] = $personel_k3[0]['nik']  ?? null;
-
-        $this->load->model('sekretariat/Sekretariat_model');
-
-        $force_save = $this->input->post('force_save') === '1';
-        if (!$force_save && method_exists($this, '_get_bulk_duplicates_internal')) {
-            $duplicates = $this->_get_bulk_duplicates_internal($personel_lapangan, $personel_k3, $peralatan, $tender_data['kode_tender'], $tender_data['tahun_anggaran']);
-            if (!empty($duplicates)) {
-                $this->output
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode([
-                        'status' => 'duplicate', 
-                        'duplicates' => $duplicates,
-                        'csrfHash' => $this->security->get_csrf_hash()
-                    ]));
-                return;
-            }
-        }
-
-        if ($this->Sekretariat_model->save_winner_package($tender_data, $personel_lapangan, $personel_k3, $peralatan, $manajer_teknik, $manajer_keuangan)) {
-            $this->output
-                ->set_content_type('application/json')
-                ->set_output(json_encode(['status' => 'success', 'message' => 'Paket Pemenang Berhasil Disimpan.']));
-            return;
-        }
-
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data pemenang.']));
-    }
 
     public function personel_lapangan_json() {
         $this->load->model('sekretariat/Personel_lapangan_model');
