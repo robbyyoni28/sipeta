@@ -307,6 +307,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         <tr>
                             <td><?= $i ?></td>
                             <td>
+                                <input type="hidden" name="peralatan[<?= $i-1 ?>][id]" value="<?= $p->id ?>">
                                 <input type="text" name="peralatan[<?= $i-1 ?>][jenis_alat]" 
                                        class="form-control form-control-sm" 
                                        value="<?= html_escape($p->jenis_alat) ?>" required>
@@ -479,7 +480,10 @@ $(document).ready(function() {
         let newRow = `
             <tr>
                 <td>${currentRowCount + 1}</td>
-                <td><input type="text" name="peralatan[${currentRowCount}][jenis_alat]" class="form-control form-control-sm" required></td>
+                <td>
+                    <input type="hidden" name="peralatan[${currentRowCount}][id]" value="">
+                    <input type="text" name="peralatan[${currentRowCount}][jenis_alat]" class="form-control form-control-sm" required>
+                </td>
                 <td><input type="text" name="peralatan[${currentRowCount}][nama_alat]" class="form-control form-control-sm"></td>
                 <td><input type="text" name="peralatan[${currentRowCount}][merk]" class="form-control form-control-sm"></td>
                 <td><input type="text" name="peralatan[${currentRowCount}][tipe]" class="form-control form-control-sm"></td>

@@ -310,12 +310,7 @@ class Admin extends MX_Controller {
         // Proses update peralatan (selalu proses, termasuk jika kosong)
         $peralatan_data = $this->input->post('peralatan');
         error_log('update_tender - peralatan_data: ' . print_r($peralatan_data, true));
-        if (is_array($peralatan_data)) {
-            $this->update_tender_peralatan($id, $peralatan_data);
-        } else {
-            error_log('update_tender - peralatan_data is not array, treating as empty');
-            $this->update_tender_peralatan($id, []);
-        }
+        $this->update_peralatan($id, is_array($peralatan_data) ? $peralatan_data : []);
 
         // Proses update personel lapangan (selalu proses, termasuk jika kosong)
         $personel_lapangan_data = $this->input->post('personel_lapangan');
@@ -345,60 +340,24 @@ class Admin extends MX_Controller {
         redirect('admin/edit_tender/' . $id);
     }
 
-    private function update_tender_peralatan($tender_id, $peralatan_data) {
-        // Delete-then-insert: hapus semua peralatan tender secara brutal sebelum meng-insert yang baru
-        $this->db->where('tender_id', $tender_id)->delete('tender_peralatan');
+    /**
+     * Sinkronisasi peralatan tender (delete-then-insert) supaya data tidak tertukar saat indeks berubah.
+     * NOTE: Hindari dedup berbasis plat_serial bila kosong, karena dapat membuat beberapa item menimpa 1 record master.
+     */
+    public function update_peralatan($tender_id, $peralatan_data = []) {
+        $tender_id = (int)$tender_id;
 
-        if (empty($peralatan_data)) return;
+        $this->db->trans_start();
 
-        // Process submitted peralatan data
-        foreach ($peralatan_data as $peralatan) {
-            if (!empty(trim($peralatan['jenis_alat'] ?? ''))) {
-                // Cek apakah peralatan sudah ada di master berdasar plat/serial
-                $existing_peralatan = $this->db->where('plat_serial', $peralatan['plat_serial'])
-                                               ->get('peralatan')
-                                               ->row();
+        // Always delete all existing junction rows first
+        $this->M_tender->delete_peralatan_by_tender($tender_id);
 
-                if ($existing_peralatan) {
-                    $peralatan_id = $existing_peralatan->id;
-                    // Update master peralatan jika ada perubahan
-                    $this->db->where('id', $peralatan_id)->update('peralatan', [
-                        'nama_alat' => $peralatan['nama_alat'],
-                        'merk' => $peralatan['merk'],
-                        'tipe' => $peralatan['tipe'],
-                        'kapasitas' => $peralatan['kapasitas'],
-                        'jenis_alat' => $peralatan['jenis_alat'],
-                        'tahun_pembuatan' => $peralatan['tahun_pembuatan'],
-                        'status_kepemilikan' => $peralatan['status_kepemilikan'] ?? 'Milik Sendiri'
-                    ]);
-                } else {
-                    // Create new peralatan in master
-                    $new_peralatan = [
-                        'penyedia_id' => $this->db->select('penyedia_id')->where('id', $tender_id)->get('tender')->row()->penyedia_id,
-                        'nama_alat' => $peralatan['nama_alat'],
-                        'merk' => $peralatan['merk'],
-                        'tipe' => $peralatan['tipe'],
-                        'kapasitas' => $peralatan['kapasitas'],
-                        'plat_serial' => $peralatan['plat_serial'],
-                        'jenis_alat' => $peralatan['jenis_alat'],
-                        'tahun_pembuatan' => $peralatan['tahun_pembuatan'],
-                        'status_kepemilikan' => $peralatan['status_kepemilikan'] ?? 'Milik Sendiri',
-                        'created_by' => $this->session->userdata('username')
-                    ];
-                    $this->db->insert('peralatan', $new_peralatan);
-                    $peralatan_id = $this->db->insert_id();
-                }
-
-                // Create new link
-                $tender_peralatan = [
-                    'tender_id' => $tender_id,
-                    'peralatan_id' => $peralatan_id,
-                    'jumlah' => $peralatan['jumlah'] ?? 1,
-                    'keterangan' => $peralatan['keterangan'] ?? null
-                ];
-                $this->db->insert('tender_peralatan', $tender_peralatan);
-            }
+        if (!empty($peralatan_data) && is_array($peralatan_data)) {
+            $this->M_tender->insert_batch_peralatan($tender_id, $peralatan_data);
         }
+
+        $this->db->trans_complete();
+        return $this->db->trans_status();
     }
 
     private function update_tender_personel_lapangan($tender_id, $personel_data) {
