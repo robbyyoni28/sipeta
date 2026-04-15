@@ -197,10 +197,21 @@ class Tender_model extends CI_Model {
                 'status_kepemilikan' => trim((string)($peralatan['status_kepemilikan'] ?? '')) ?: 'Milik Sendiri',
             ];
 
-            if ($master_id > 0) {
-                $this->db->where('id', $master_id)->update('peralatan', $master_payload);
-            } else {
-                if ($plat_serial !== '') {
+            /**
+             * IMPORTANT:
+             * In tender edit UI, it's common to have multiple rows that point to the same master `peralatan.id`
+             * (e.g. user adds 3 rows "POMPA AIR" but they came from one master record).
+             * If we update master by `id` while `plat_serial` is empty, one row edit can overwrite others.
+             *
+             * Therefore:
+             * - Only update/reuse master when `plat_serial` is provided (stable identity).
+             * - If `plat_serial` is empty, always create a NEW master record for that row.
+             */
+            if ($plat_serial !== '') {
+                // Prefer using provided master_id when present, but keep it scoped to same penyedia_id.
+                if ($master_id > 0) {
+                    $this->db->where('id', $master_id)->where('penyedia_id', $penyedia_id)->update('peralatan', $master_payload);
+                } else {
                     $existing = $this->db->where('penyedia_id', $penyedia_id)
                                          ->where('plat_serial', $plat_serial)
                                          ->get('peralatan')
@@ -210,12 +221,15 @@ class Tender_model extends CI_Model {
                         $this->db->where('id', $master_id)->update('peralatan', $master_payload);
                     }
                 }
+            } else {
+                // Force new master record when no serial/plate is provided.
+                $master_id = 0;
+            }
 
-                if ($master_id <= 0) {
-                    $master_payload['created_by'] = $this->session->userdata('username');
-                    $this->db->insert('peralatan', $master_payload);
-                    $master_id = (int)$this->db->insert_id();
-                }
+            if ($master_id <= 0) {
+                $master_payload['created_by'] = $this->session->userdata('username');
+                $this->db->insert('peralatan', $master_payload);
+                $master_id = (int)$this->db->insert_id();
             }
 
             $batch_insert[] = [
