@@ -308,7 +308,7 @@
                     <a href="<?= base_url('admin/manajer_keuangan') ?>"><i class="fas fa-user-tie"></i> Manajer Keuangan</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
-                    <a href="<?= base_url('admin/personel_lapangan') ?>"><i class="fas fa-users"></i> Personel Lapangan</a>
+                    <a href="<?= base_url('admin/personel_lapangan') ?>"><i class="fas fa-users"></i> Pelaksana Lapangan</a>
                 </li>
                 <li class="<?= $this->uri->segment(2) == 'personel_k3' ? 'active' : '' ?>">
                     <a href="<?= base_url('admin/personel_k3') ?>"><i class="fas fa-hard-hat"></i> Personel K3</a>

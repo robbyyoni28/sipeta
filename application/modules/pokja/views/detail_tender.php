@@ -48,7 +48,7 @@
                 <a class="nav-link" id="mk-tab" data-toggle="tab" href="#manajer_keuangan" role="tab"><i class="fas fa-file-invoice-dollar mr-1"></i> Manajer Keuangan</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="personel-tab" data-toggle="tab" href="#personel_lapangan" role="tab"><i class="fas fa-users mr-1"></i> Personel Lapangan</a>
+                <a class="nav-link" id="personel-tab" data-toggle="tab" href="#personel_lapangan" role="tab"><i class="fas fa-users mr-1"></i> Pelaksana Lapangan</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="k3-tab" data-toggle="tab" href="#k3" role="tab"><i class="fas fa-hard-hat mr-1"></i> Personel K3</a>
@@ -125,7 +125,7 @@
                 <?php if(empty($personel_lapangan)): ?>
                     <div class="text-center py-5">
                         <i class="fas fa-users-slash fa-3x text-light mb-3"></i>
-                        <p class="text-muted">Tidak ada personel lapangan ekstra yang ditugaskan.</p>
+                        <p class="text-muted">Tidak ada pelaksana lapangan yang ditugaskan.</p>
                     </div>
                 <?php else: ?>
                     <?php foreach($personel_lapangan as $pl): ?>

@@ -149,7 +149,7 @@
             <ul class="nav nav-tabs" id="personelTabs" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="lapangan-tab" data-toggle="tab" href="#lapangan" role="tab">
-                        <i class="fas fa-hard-hat mr-2"></i>Personel Lapangan
+                        <i class="fas fa-hard-hat mr-2"></i>Pelaksana Lapangan
                     </a>
                 </li>
                 <li class="nav-item">
@@ -308,7 +308,7 @@
                         </table>
                     </div>
                     <button type="button" class="btn btn-sm btn-primary mt-2" id="add-personel-lapangan">
-                        <i class="fas fa-plus mr-1"></i> Tambah Personel Lapangan
+                        <i class="fas fa-plus mr-1"></i> Tambah Pelaksana Lapangan
                     </button>
                 </div>
 
@@ -391,7 +391,7 @@
                                         <select name="status_kepemilikan[]" class="form-control form-control-sm">
                                             <option value="Milik Sendiri" <?= (!$p || $p->status_kepemilikan == 'Milik Sendiri') ? 'selected' : '' ?>>Milik Sendiri</option>
                                             <option value="Sewa" <?= ($p && $p->status_kepemilikan == 'Sewa') ? 'selected' : '' ?>>Sewa</option>
-                                            <option value="Kerjasama" <?= ($p && $p->status_kepemilikan == 'Kerjasama') ? 'selected' : '' ?>>Kerjasama</option>
+                                            <option value="Sewa Beli" <?= ($p && $p->status_kepemilikan == 'Sewa Beli') ? 'selected' : '' ?>>Sewa Beli</option>
                                         </select>
                                     </td>
                                     <td><input type="number" name="jumlah[]" class="form-control form-control-sm" value="<?= $p ? html_escape($p->jumlah ?? 1) : 1 ?>" min="1"></td>
@@ -419,7 +419,7 @@
                                     <select name="status_kepemilikan[]" class="form-control form-control-sm">
                                         <option value="Milik Sendiri" selected>Milik Sendiri</option>
                                         <option value="Sewa">Sewa</option>
-                                        <option value="Kerjasama">Kerjasama</option>
+                                        <option value="Sewa Beli">Sewa Beli</option>
                                     </select>
                                 </td>
                                 <td><input type="number" name="jumlah[]" class="form-control form-control-sm" value="1" min="1"></td>
@@ -595,7 +595,7 @@ $(document).ready(function() {
             if (nik) {
                 if (nikLapangan.includes(nik)) {
                     e.preventDefault();
-                    alert('NIK ' + nik + ' duplikat pada Personel Lapangan!');
+                    alert('NIK ' + nik + ' duplikat pada Pelaksana Lapangan!');
                     $(this).focus();
                     return false;
                 }

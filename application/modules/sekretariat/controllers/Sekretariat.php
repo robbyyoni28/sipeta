@@ -403,18 +403,19 @@ class Sekretariat extends MX_Controller {
             }
         }
 
-        // Looping Bersih Peralatan
+        // Looping Bersih Peralatan - NEW FLAT FORMAT
+        // Format baru: peralatan[N][jenis_alat], peralatan[N][plat_serial], dll.
+        // Setiap row = 1 unit alat, tidak ada lagi nested units.
         $peralatan = [];
         if ($jenis_tender !== 'konsultansi') {
             $raw_alat = $this->input->post('peralatan');
             if (!empty($raw_alat) && is_array($raw_alat)) {
                 foreach ($raw_alat as $alat) {
-                    if (!empty(trim($alat['jenis_alat'] ?? ''))) {
-                        if (trim((string)($alat['nama_alat'] ?? '')) === '') {
-                            $alat['nama_alat'] = trim((string)($alat['jenis_alat'] ?? ''));
-                        }
-                        $peralatan[] = $alat;
-                    }
+                    $jenis = trim((string)($alat['jenis_alat'] ?? ''));
+                    if ($jenis === '') continue; // Skip baris kosong
+                    // Pastikan nama_alat selalu terisi (sinkron dengan jenis_alat)
+                    $alat['nama_alat'] = $jenis;
+                    $peralatan[] = $alat;
                 }
             }
         }
@@ -438,7 +439,9 @@ class Sekretariat extends MX_Controller {
             }
         }
 
-        // ── INSERT TENDER FIRST
+        // ── INSERT TENDER (wrapped dalam transaction)
+        $this->db->trans_start();
+
         $tender_id = $this->M_tender->insert_tender($tender_data);
 
         if ($tender_id) {
@@ -531,18 +534,19 @@ class Sekretariat extends MX_Controller {
                 ]);
             }
 
-            // 5. Personel Lapangan (Rest of the list)
+            // 5. Personel Lapangan (Pelaksana Lapangan)
             if (!empty($personel_lapangan)) {
                 foreach ($personel_lapangan as $idx => $pl) {
                     $existing = $this->db->get_where('personel_lapangan', ['nik' => $pl['nik']])->row();
                     if ($existing) {
                         $p_id = $existing->id;
                     } else {
+                        $jabatan_val = !empty($pl['jabatan']) ? $pl['jabatan'] : 'Pelaksana Lapangan';
                         $this->db->insert('personel_lapangan', [
                             'penyedia_id' => $penyedia_id,
                             'nama' => $pl['nama'],
                             'nik' => $pl['nik'],
-                            'jabatan' => $pl['jabatan'] ?? 'Pelaksana',
+                            'jabatan' => $jabatan_val,
                             'jenis_skk' => $pl['jenis_skk'] ?? null,
                             'nomor_skk' => $pl['nomor_skk'] ?? null,
                             'masa_berlaku_skk' => $this->_normalize_date_internal($pl['masa_berlaku_skk'] ?? null),
@@ -554,16 +558,73 @@ class Sekretariat extends MX_Controller {
                 }
             }
 
-            // 6. Peralatan
+            // 6. Peralatan - FLAT FORMAT (1 row = 1 unit alat)
+            // Setiap elemen $peralatan sudah merupakan 1 unit alat dengan field langsung.
             if (!empty($peralatan)) {
-                $this->M_tender->save_batch_peralatan($tender_id, $peralatan);
+                foreach ($peralatan as $alat) {
+                    $jenis  = trim((string)($alat['jenis_alat'] ?? ''));
+                    $nama   = trim((string)($alat['nama_alat'] ?? $jenis));
+                    $plat   = trim((string)($alat['plat_serial'] ?? ''));
+
+                    if ($jenis === '' && $nama === '') continue; // Baris benar-benar kosong
+
+                    $peralatan_data = [
+                        'penyedia_id'        => $penyedia_id,
+                        'jenis_alat'         => $jenis ?: $nama,
+                        'nama_alat'          => $nama ?: $jenis,
+                        'merk'               => $alat['merk'] ?? null,
+                        'tipe'               => $alat['tipe'] ?? null,
+                        'kapasitas'          => $alat['kapasitas'] ?? null,
+                        'plat_serial'        => $plat ?: null,
+                        'status_kepemilikan' => $alat['status_kepemilikan'] ?? 'Milik Sendiri',
+                        'nama_pemilik_alat'  => $alat['nama_pemilik_alat'] ?? null,
+                        'bukti_kepemilikan'  => $alat['bukti_kepemilikan'] ?? null,
+                        'created_by'         => $this->session->userdata('username')
+                    ];
+
+                    // Cek duplikasi berdasarkan plat_serial (jika ada)
+                    if ($plat !== '') {
+                        $existing_pl = $this->db->get_where('peralatan', ['plat_serial' => $plat])->row();
+                        if ($existing_pl) {
+                            $peralatan_id = $existing_pl->id;
+                            // Update data yang ada
+                            $this->db->where('id', $peralatan_id)->update('peralatan', $peralatan_data);
+                        } else {
+                            $this->db->insert('peralatan', $peralatan_data);
+                            $peralatan_id = $this->db->insert_id();
+                        }
+                    } else {
+                        // Tanpa plat_serial → selalu buat baru
+                        $this->db->insert('peralatan', $peralatan_data);
+                        $peralatan_id = $this->db->insert_id();
+                    }
+
+                    // Hubungkan ke tender (jumlah=1 per unit/row)
+                    $this->db->insert('tender_peralatan', [
+                        'tender_id'    => $tender_id,
+                        'peralatan_id' => $peralatan_id,
+                        'jumlah'       => 1
+                    ]);
+                }
+            }
+
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                $this->output->set_content_type('application/json')->set_output(json_encode([
+                    'status' => 'error',
+                    'message' => 'Terjadi kesalahan database. Data tidak tersimpan.',
+                    'csrfHash' => $this->security->get_csrf_hash()
+                ]));
+                return;
             }
 
             $this->output->set_content_type('application/json')->set_output(json_encode(['status' => 'success', 'message' => 'Data Pemenang Tender Berhasil Disimpan.']));
             return;
         }
 
-        $this->output->set_content_type('application/json')->set_output(json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data.']));
+        $this->db->trans_rollback();
+        $this->output->set_content_type('application/json')->set_output(json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data tender.']));
     }
 
     private function _normalize_date_internal($value) {
@@ -571,55 +632,6 @@ class Sekretariat extends MX_Controller {
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) return $value;
         $dt = DateTime::createFromFormat('d/m/Y', $value);
         return $dt ? $dt->format('Y-m-d') : null;
-    }
-
-    private function _get_bulk_duplicates_internal($personel_lapangan, $personel_k3, $peralatan, $kode_tender, $tahun) {
-        $duplicates = [];
-        
-        // Check Personel Lapangan
-        foreach ($personel_lapangan as $p) {
-            $check = $this->Sekretariat_model->check_personel_duplicate_in_year($p['nik'], $tahun, $kode_tender);
-            if ($check) {
-                $duplicates[] = [
-                    'type' => 'Personel Lapangan',
-                    'nama' => $p['nama'],
-                    'nik' => $p['nik'],
-                    'tender' => $check->kode_tender . ' - ' . $check->judul_paket
-                ];
-            }
-        }
-
-        // Check Personel K3
-        foreach ($personel_k3 as $pk) {
-            $check = $this->Sekretariat_model->check_k3_duplicate_in_year($pk['nik'], $tahun, $kode_tender);
-            if ($check) {
-                $duplicates[] = [
-                    'type' => 'Personel K3',
-                    'nama' => $pk['nama'],
-                    'nik' => $pk['nik'],
-                    'tender' => $check->kode_tender . ' - ' . $check->judul_paket
-                ];
-            }
-        }
-
-        // Check Peralatan
-        if (!empty($peralatan)) {
-            foreach ($peralatan as $alat) {
-                if (!empty($alat['plat_serial'])) {
-                    $check = $this->Sekretariat_model->check_peralatan_duplicate_in_year($alat['plat_serial'], $tahun, $kode_tender);
-                    if ($check) {
-                        $duplicates[] = [
-                            'type' => 'Peralatan',
-                            'nama' => $alat['jenis_alat'],
-                            'nik' => $alat['plat_serial'],
-                            'tender' => $check->kode_tender . ' - ' . $check->judul_paket
-                        ];
-                    }
-                }
-            }
-        }
-
-        return $duplicates;
     }
 
     // ============================================

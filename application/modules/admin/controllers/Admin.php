@@ -376,7 +376,7 @@ class Admin extends MX_Controller {
                 $na = $ja;
             }
             $stat = trim((string)($status_kepemilikan[$i] ?? ''));
-            if (!in_array($stat, ['Milik Sendiri', 'Sewa', 'Kerjasama'], true)) {
+            if (!in_array($stat, ['Milik Sendiri', 'Sewa', 'Sewa Beli'], true)) {
                 $stat = 'Milik Sendiri';
             }
             $thn = isset($tahun_pembuatan[$i]) && $tahun_pembuatan[$i] !== '' ? (int)$tahun_pembuatan[$i] : null;

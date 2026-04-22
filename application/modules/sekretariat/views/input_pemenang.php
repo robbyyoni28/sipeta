@@ -124,9 +124,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Personel Lapangan -->
+                                <!-- Pelaksana Lapangan -->
                                 <tr class="bg-white row-pl">
-                                    <td class="font-weight-bold px-4 align-middle">Personel Lapangan</td>
+                                    <td class="font-weight-bold px-4 align-middle">Pelaksana Lapangan</td>
                                     <td class="py-3">
                                         <input type="text" name="personel_lapangan[0][nama]" class="form-control form-control-sm mb-1 bg-light border-0" placeholder="Nama Lengkap" style="border-radius: 8px;">
                                         <input type="text" name="personel_lapangan[0][nik]" class="form-control form-control-sm nik-check bg-light border-0" placeholder="NIK" style="border-radius: 8px;">
@@ -138,7 +138,7 @@
                                         <div class="feedback-skk-inline"></div>
                                     </td>
                                     <td class="py-3 px-4"><input type="text" name="personel_lapangan[0][masa_berlaku_skk]" class="form-control form-control-sm bg-light border-0 datepicker" style="border-radius: 8px;" placeholder="dd/mm/yyyy"></td>
-                                    <input type="hidden" name="personel_lapangan[0][jabatan]" value="Personel Lapangan">
+                                    <input type="hidden" name="personel_lapangan[0][jabatan]" value="Pelaksana Lapangan">
                                 </tr>
                                 <!-- MT -->
                                 <tr class="bg-light-faded row-mt">
@@ -200,7 +200,7 @@
         <div class="card-header py-3 bg-gradient-success text-white border-0 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold"><i class="fas fa-tools mr-2"></i>3. Data Peralatan Utama</h6>
             <button type="button" id="btn-add-peralatan" class="btn btn-light btn-sm font-weight-bold rounded-pill">
-                <i class="fas fa-plus mr-1"></i> Tambah Jenis Alat
+                <i class="fas fa-plus mr-1"></i> Tambah Alat
             </button>
         </div>
         <div class="card-body p-0">
@@ -208,57 +208,50 @@
                 <table class="table mb-0 small" id="table-peralatan">
                     <thead class="bg-light text-uppercase font-weight-bold text-muted" style="font-size: 0.7rem;">
                         <tr>
-                            <th class="px-4 py-3" width="18%">Nama / Jenis Alat</th>
-                            <th class="py-3" width="8%">Jumlah</th>
-                            <th class="py-3">Detail Unit (Plat/Seri, Merk & Tipe, Kapasitas, Kepemilikan, Pemilik, Bukti)</th>
-                            <th class="py-3 px-4" width="8%">Aksi</th>
+                            <th class="px-3 py-3" width="14%">Jenis Alat</th>
+                            <th class="py-3" width="10%">No. Plat / Seri</th>
+                            <th class="py-3" width="9%">Merk</th>
+                            <th class="py-3" width="9%">Tipe</th>
+                            <th class="py-3" width="10%">Kapasitas</th>
+                            <th class="py-3" width="12%">Status Kepemilikan</th>
+                            <th class="py-3" width="15%">Nama Pemilik</th>
+                            <th class="py-3" width="13%">Bukti Kepemilikan</th>
+                            <th class="py-3 px-3" width="8%">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr class="row-peralatan-template">
-                            <td class="px-4 py-3 align-middle">
-                                <input type="hidden" name="peralatan[0][nama_alat]" class="peralatan-nama-alat-sync" value="">
-                                <input type="text" name="peralatan[0][jenis_alat]" class="form-control form-control-sm bg-light border-0 input-jenis-peralatan" placeholder="Excavator" style="border-radius: 8px;" autocomplete="off">
+                    <tbody id="tbody-peralatan">
+                        <tr class="row-peralatan">
+                            <td class="px-3 py-2 align-middle">
+                                <input type="text" name="peralatan[0][jenis_alat]" class="form-control form-control-sm bg-light border-0" placeholder="Excavator" style="border-radius: 8px;" autocomplete="off">
                             </td>
-                            <td class="py-3 align-middle">
-                                <input type="number" name="peralatan[0][jumlah]" class="form-control form-control-sm bg-light border-0 text-center qty-peralatan" min="1" value="1" style="border-radius: 8px;">
+                            <td class="py-2 align-middle">
+                                <input type="text" name="peralatan[0][plat_serial]" class="form-control form-control-sm plat-check bg-white border-0 font-weight-bold" placeholder="No. Plat / Seri" style="border-radius: 8px;">
+                                <div class="feedback-plat-inline"></div>
                             </td>
-                            <td class="py-3 align-middle">
-                                <div class="peralatan-units">
-                                    <div class="unit-item" data-unit="0" style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 10px; background: #f8fafc;">
-                                        <div class="form-row">
-                                            <div class="col-md-3 mb-2">
-                                                <input type="text" name="peralatan[0][units][0][plat_serial]" class="form-control form-control-sm plat-check bg-white border-0 font-weight-bold" placeholder="No. Plat / Seri" style="border-radius: 8px;">
-                                                <div class="feedback-plat-inline"></div>
-                                            </div>
-                                            <div class="col-md-2 mb-2">
-                                                <input type="text" name="peralatan[0][units][0][merk]" class="form-control form-control-sm bg-white border-0" placeholder="Merk" style="border-radius: 8px;">
-                                            </div>
-                                            <div class="col-md-2 mb-2">
-                                                <input type="text" name="peralatan[0][units][0][tipe]" class="form-control form-control-sm bg-white border-0" placeholder="Tipe" style="border-radius: 8px;">
-                                            </div>
-                                            <div class="col-md-2 mb-2">
-                                                <input type="text" name="peralatan[0][units][0][kapasitas]" class="form-control form-control-sm bg-white border-0" placeholder="Kapasitas" style="border-radius: 8px;">
-                                            </div>
-                                            <div class="col-md-3 mb-2">
-                                                <select name="peralatan[0][units][0][status_kepemilikan]" class="form-control form-control-sm bg-white border-0" style="border-radius: 8px;">
-                                                    <option value="Milik Sendiri">Milik Sendiri</option>
-                                                    <option value="Sewa">Sewa</option>
-                                                    <option value="Sewa Beli">Sewa Beli</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <input type="text" name="peralatan[0][units][0][nama_pemilik_alat]" class="form-control form-control-sm bg-white border-0" placeholder="Nama Pemilik Alat" style="border-radius: 8px;">
-                                            </div>
-                                            <div class="col-md-8">
-                                                <input type="text" name="peralatan[0][units][0][bukti_kepemilikan]" class="form-control form-control-sm bg-white border-0" placeholder="Bukti Kepemilikan Alat" style="border-radius: 8px;">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <td class="py-2 align-middle">
+                                <input type="text" name="peralatan[0][merk]" class="form-control form-control-sm bg-white border-0" placeholder="Merk" style="border-radius: 8px;">
                             </td>
-                            <td class="py-3 px-4 align-middle text-center">
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-peralatan" style="border-radius: 10px;">
+                            <td class="py-2 align-middle">
+                                <input type="text" name="peralatan[0][tipe]" class="form-control form-control-sm bg-white border-0" placeholder="Tipe" style="border-radius: 8px;">
+                            </td>
+                            <td class="py-2 align-middle">
+                                <input type="text" name="peralatan[0][kapasitas]" class="form-control form-control-sm bg-white border-0" placeholder="Kapasitas" style="border-radius: 8px;">
+                            </td>
+                            <td class="py-2 align-middle">
+                                <select name="peralatan[0][status_kepemilikan]" class="form-control form-control-sm bg-white border-0" style="border-radius: 8px;">
+                                    <option value="Milik Sendiri">Milik Sendiri</option>
+                                    <option value="Sewa">Sewa</option>
+                                    <option value="Sewa Beli">Sewa Beli</option>
+                                </select>
+                            </td>
+                            <td class="py-2 align-middle">
+                                <input type="text" name="peralatan[0][nama_pemilik_alat]" class="form-control form-control-sm bg-white border-0" placeholder="Nama Pemilik" style="border-radius: 8px;">
+                            </td>
+                            <td class="py-2 align-middle">
+                                <input type="text" name="peralatan[0][bukti_kepemilikan]" class="form-control form-control-sm bg-white border-0" placeholder="Bukti Kepemilikan" style="border-radius: 8px;">
+                            </td>
+                            <td class="py-2 px-3 align-middle text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-peralatan" style="border-radius: 10px;" title="Hapus baris">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -280,149 +273,64 @@
 
 <script>
 $(document).ready(function() {
-    // Format Rupiah while typing
+    // =============================================
+    // FORMAT RUPIAH
+    // =============================================
     $('.rupiah').on('keyup', function() {
         let val = $(this).val().replace(/[^0-9]/g, '');
         $(this).val(new Intl.NumberFormat('id-ID').format(val));
     });
 
-    // Samakan nama_alat dengan jenis_alat (kolom DB NOT NULL; form hanya punya satu kolom input)
-    function syncAllPeralatanNamaAlat() {
-        $('#table-peralatan tbody tr').each(function() {
-            var $row = $(this);
-            var j = $row.find('.input-jenis-peralatan').val() || '';
-            $row.find('.peralatan-nama-alat-sync').val(j);
-        });
-    }
-    $(document).on('input change', '#table-peralatan .input-jenis-peralatan', function() {
-        $(this).closest('tr').find('.peralatan-nama-alat-sync').val($(this).val() || '');
-    });
-    $('#form-pemenang').on('submit', function() {
-        syncAllPeralatanNamaAlat();
-    });
+    // =============================================
+    // PERALATAN - FLAT ROWS (1 BARIS = 1 UNIT ALAT)
+    // Tidak ada lagi qty/units nested — lebih sederhana, bebas duplikasi
+    // =============================================
 
-    // Dynamic peralatan rows
-    let peralatanIndex = 0;
+    /**
+     * Reindex semua nama field di #tbody-peralatan agar sequential.
+     * Hanya update indeks peralatan[N] — tidak ada units nesting lagi.
+     */
     function reindexPeralatan() {
-        $('#table-peralatan tbody tr').each(function(idx) {
-            // Update peralatan index
+        $('#tbody-peralatan tr.row-peralatan').each(function(idx) {
             $(this).find('input, select').each(function() {
-                const name = $(this).attr('name');
+                var name = $(this).attr('name');
                 if (!name) return;
-                const newName = name.replace(/peralatan\[\d+\]/, 'peralatan['+idx+']');
-                $(this).attr('name', newName);
-            });
-
-            // Update unit index
-            $(this).find('.unit-item').each(function(uIdx) {
-                $(this).attr('data-unit', uIdx);
-                $(this).find('input, select').each(function() {
-                    const name = $(this).attr('name');
-                    if (!name) return;
-                    // Update both peralatan index and unit index
-                    const newName = name
-                        .replace(/peralatan\[\d+\]/, 'peralatan['+idx+']')
-                        .replace(/\[units\]\[\d+\]/, '[units]['+uIdx+']');
-                    $(this).attr('name', newName);
-                });
+                // Replace peralatan[angka] → peralatan[idx]
+                $(this).attr('name', name.replace(/peralatan\[\d+\]/, 'peralatan[' + idx + ']'));
             });
         });
-        peralatanIndex = $('#table-peralatan tbody tr').length - 1;
     }
 
-    function syncUnitCount($row) {
-        let qty = parseInt($row.find('.qty-peralatan').val(), 10);
-        if (isNaN(qty) || qty < 1) qty = 1;
-        $row.find('.qty-peralatan').val(qty);
-
-        const $unitsWrap = $row.find('.peralatan-units');
-        const $template = $unitsWrap.find('.unit-item:first').clone();
-        let current = $unitsWrap.find('.unit-item').length;
-
-        if (current < qty) {
-            // Ambil data dari unit pertama untuk diisi ke unit baru
-            const $firstUnit = $unitsWrap.find('.unit-item:first');
-            const firstUnitData = {
-                plat_serial: $firstUnit.find('input[name*="[plat_serial]"]').val(),
-                merk: $firstUnit.find('input[name*="[merk]"]').val(),
-                tipe: $firstUnit.find('input[name*="[tipe]"]').val(),
-                kapasitas: $firstUnit.find('input[name*="[kapasitas]"]').val(),
-                status_kepemilikan: $firstUnit.find('select[name*="[status_kepemilikan]"]').val(),
-                nama_pemilik_alat: $firstUnit.find('input[name*="[nama_pemilik_alat]"]').val(),
-                bukti_kepemilikan: $firstUnit.find('input[name*="[bukti_kepemilikan]"]').val()
-            };
-            
-            for (let i = current; i < qty; i++) {
-                const $newUnit = $template.clone();
-                
-                // Kosongkan nomor plat/seri untuk unit baru (harus berbeda)
-                $newUnit.find('input[name*="[plat_serial]"]').val('').addClass('border-warning');
-                $newUnit.find('.feedback-plat-inline').empty();
-                
-                // Isi data lainnya sama dengan unit pertama
-                $newUnit.find('input[name*="[merk]"]').val(firstUnitData.merk);
-                $newUnit.find('input[name*="[tipe]"]').val(firstUnitData.tipe);
-                $newUnit.find('input[name*="[kapasitas]"]').val(firstUnitData.kapasitas);
-                $newUnit.find('select[name*="[status_kepemilikan]"]').val(firstUnitData.status_kepemilikan);
-                $newUnit.find('input[name*="[nama_pemilik_alat]"]').val(firstUnitData.nama_pemilik_alat);
-                $newUnit.find('input[name*="[bukti_kepemilikan]"]').val(firstUnitData.bukti_kepemilikan);
-                
-                // Tambahkan indicator unit baru
-                $newUnit.css('border-left', '4px solid #ffc107');
-                $newUnit.find('.col-md-3').prepend('<small class="badge badge-warning mb-1">Unit Baru</small>');
-                
-                $unitsWrap.append($newUnit);
-                
-                // Auto-focus ke plat serial yang kosong
-                setTimeout(() => {
-                    $newUnit.find('input[name*="[plat_serial]"]').focus();
-                }, 100);
-            }
-        } else if (current > qty) {
-            $unitsWrap.find('.unit-item').slice(qty).remove();
-        }
-        reindexPeralatan();
-    }
-
+    // Tambah baris alat baru (clone baris terakhir, clear semua value)
     $('#btn-add-peralatan').on('click', function() {
-        const $last = $('#table-peralatan tbody tr:last');
-        const $clone = $last.clone();
-        // Kosongkan SEMUA field input & select di baris baru
+        var $tbody = $('#tbody-peralatan');
+        var $rows = $tbody.find('tr.row-peralatan');
+        var $last = $rows.last();
+        var $clone = $last.clone(true, true);
+
+        // Bersihkan semua nilai & feedback di baris baru
         $clone.find('input').val('');
         $clone.find('select').prop('selectedIndex', 0);
-        $clone.find('.qty-peralatan').val(1);
-        $clone.find('.feedback-plat-inline, .feedback-skk-inline, .feedback-nik-inline').html('');
+        $clone.find('.feedback-plat-inline').empty();
         $clone.find('.is-valid, .border-warning').removeClass('is-valid border-warning');
-        $clone.find('.badge-warning').remove();
-        $clone.css('border-left', '');
-        // Hanya sisakan unit pertama, hapus duplikat unit lainnya
-        $clone.find('.peralatan-units .unit-item').slice(1).remove();
-        $('#table-peralatan tbody').append($clone);
+
+        $tbody.append($clone);
         reindexPeralatan();
+
+        // Fokus ke field jenis_alat di baris baru
+        $clone.find('input:first').focus();
     });
 
-    $(document).on('change keyup', '.qty-peralatan', function() {
-        const $row = $(this).closest('tr');
-        syncUnitCount($row);
-    });
-    
-    // Remove warning border when user starts typing plat serial
-    $(document).on('input', 'input[name*="[plat_serial]"]', function() {
-        if ($(this).val().length > 0) {
-            $(this).removeClass('border-warning');
-            $(this).closest('.unit-item').find('.badge-warning').remove();
-            $(this).closest('.unit-item').css('border-left', '1px solid #e2e8f0');
-        }
-    });
-
+    // Hapus baris alat
     $(document).on('click', '.btn-remove-peralatan', function() {
-        const $rows = $('#table-peralatan tbody tr');
+        var $tbody = $('#tbody-peralatan');
+        var $rows = $tbody.find('tr.row-peralatan');
         if ($rows.length <= 1) {
-            $(this).closest('tr').find('input').val('');
-            $(this).closest('tr').find('.qty-peralatan').val(1);
-            $(this).closest('tr').find('.feedback-plat-inline').empty();
-            $(this).closest('tr').find('.peralatan-units .unit-item').slice(1).remove();
-            reindexPeralatan();
+            // Jika hanya 1 baris, kosongkan saja (jangan hapus)
+            $rows.first().find('input').val('');
+            $rows.first().find('select').prop('selectedIndex', 0);
+            $rows.first().find('.feedback-plat-inline').empty();
+            $rows.first().find('.is-valid, .border-warning').removeClass('is-valid border-warning');
             return;
         }
         $(this).closest('tr').remove();
@@ -610,7 +518,6 @@ $(document).ready(function() {
     });
 
     function performAjaxSubmit(form, forceSave = false) {
-        syncAllPeralatanNamaAlat();
         let formData = new FormData(form);
         if (forceSave) {
             formData.append('force_save', '1');
@@ -831,13 +738,14 @@ $(document).ready(function() {
         });
     });
 
-    // Separated Clear Logic to avoid clearing while typing (only on change/blur)
+    // FIX BUG: Saat NIK berubah, HANYA hapus field SKK/Sertifikat, BUKAN field Nama.
+    // Bug sebelumnya: input[name*="nama"] ikut dihapus sehingga nama hilang saat isi NIK.
     $(document).on('change', '.nik-check', function() {
-        let input = $(this);
-        let row = input.closest('tr');
-        // Only clear if the NIK is longer than 3 or empty (indicating a real change intent)
+        var input = $(this);
+        var row = input.closest('tr');
+        // Hanya clear nomor SKK/sertifikat — JANGAN hapus nama
         if (input.val().length > 3 || input.val().length === 0) {
-            row.find('input[name*="nomor_skk"], input[name*="nomor_sertifikat_k3"], input[name*="nama"]').val('');
+            row.find('input[name*="nomor_skk"], input[name*="nomor_sertifikat_k3"]').val('');
             row.find('.is-valid').removeClass('is-valid');
             row.find('.feedback-skk-inline, .feedback-nik-inline').empty();
             row.find('.skk-check, .nik-check').removeClass('border-warning');

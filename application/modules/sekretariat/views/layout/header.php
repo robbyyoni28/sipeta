@@ -578,7 +578,7 @@
                         <a href="<?= base_url('sekretariat/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i><span class="menu-text">MANAJER KEUANGAN</span></a>
                     </li>
                     <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
-                        <a href="<?= base_url('sekretariat/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i><span class="menu-text">PERSONEL LAPANGAN</span></a>
+                        <a href="<?= base_url('sekretariat/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i><span class="menu-text">PELAKSANA LAPANGAN</span></a>
                     </li>
                     <li class="<?= $this->uri->segment(2) == 'personel_k3' ? 'active' : '' ?>">
                         <a href="<?= base_url('sekretariat/personel_k3') ?>"><i class="fas fa-briefcase-medical mr-2"></i><span class="menu-text">PERSONEL K3</span></a>

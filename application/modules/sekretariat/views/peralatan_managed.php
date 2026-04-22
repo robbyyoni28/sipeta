@@ -83,6 +83,14 @@
                                 <input type="text" name="plat_serial" class="form-control" required>
                             </div>
                             <div class="form-group">
+                                <label>Status Kepemilikan</label>
+                                <select name="status_kepemilikan" class="form-control">
+                                    <option value="Milik Sendiri">Milik Sendiri</option>
+                                    <option value="Sewa">Sewa</option>
+                                    <option value="Sewa Beli">Sewa Beli</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label>Bukti Kepemilikan</label>
                                 <input type="text" name="bukti_kepemilikan" class="form-control" placeholder="Faktur / Invoice">
                             </div>

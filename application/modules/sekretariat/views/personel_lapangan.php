@@ -94,7 +94,7 @@
 </style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-users mr-3 text-primary"></i>Monitoring Personel Lapangan</h1>
+    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-users mr-3 text-primary"></i>Monitoring Pelaksana Lapangan</h1>
 </div>
 
 <!-- Premium Filter Section -->
