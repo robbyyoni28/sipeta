@@ -288,37 +288,69 @@ $(document).ready(function() {
 
     /**
      * Reindex semua nama field di #tbody-peralatan agar sequential.
-     * Hanya update indeks peralatan[N] — tidak ada units nesting lagi.
+     * Dipanggil HANYA saat hapus baris untuk merapikan ulang index.
      */
     function reindexPeralatan() {
         $('#tbody-peralatan tr.row-peralatan').each(function(idx) {
             $(this).find('input, select').each(function() {
                 var name = $(this).attr('name');
                 if (!name) return;
-                // Replace peralatan[angka] → peralatan[idx]
                 $(this).attr('name', name.replace(/peralatan\[\d+\]/, 'peralatan[' + idx + ']'));
             });
         });
     }
 
-    // Tambah baris alat baru (clone baris terakhir, clear semua value)
+    /**
+     * Buat HTML baris peralatan kosong baru dengan index yang diberikan.
+     * TIDAK menggunakan clone — selalu menghasilkan baris benar-benar kosong.
+     */
+    function buatBarisPeralatanBaru(idx) {
+        return '<tr class="row-peralatan">' +
+            '<td class="px-3 py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][jenis_alat]" class="form-control form-control-sm bg-light border-0" placeholder="Excavator" style="border-radius: 8px;" autocomplete="off">' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][plat_serial]" class="form-control form-control-sm plat-check bg-white border-0 font-weight-bold" placeholder="No. Plat / Seri" style="border-radius: 8px;">' +
+                '<div class="feedback-plat-inline"></div>' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][merk]" class="form-control form-control-sm bg-white border-0" placeholder="Merk" style="border-radius: 8px;">' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][tipe]" class="form-control form-control-sm bg-white border-0" placeholder="Tipe" style="border-radius: 8px;">' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][kapasitas]" class="form-control form-control-sm bg-white border-0" placeholder="Kapasitas" style="border-radius: 8px;">' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<select name="peralatan[' + idx + '][status_kepemilikan]" class="form-control form-control-sm bg-white border-0" style="border-radius: 8px;">' +
+                    '<option value="Milik Sendiri">Milik Sendiri</option>' +
+                    '<option value="Sewa">Sewa</option>' +
+                    '<option value="Sewa Beli">Sewa Beli</option>' +
+                '</select>' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][nama_pemilik_alat]" class="form-control form-control-sm bg-white border-0" placeholder="Nama Pemilik" style="border-radius: 8px;">' +
+            '</td>' +
+            '<td class="py-2 align-middle">' +
+                '<input type="text" name="peralatan[' + idx + '][bukti_kepemilikan]" class="form-control form-control-sm bg-white border-0" placeholder="Bukti Kepemilikan" style="border-radius: 8px;">' +
+            '</td>' +
+            '<td class="py-2 px-3 align-middle text-center">' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-peralatan" style="border-radius: 10px;" title="Hapus baris">' +
+                    '<i class="fas fa-trash"></i>' +
+                '</button>' +
+            '</td>' +
+        '</tr>';
+    }
+
+    // Tambah baris alat baru — gunakan template kosong, BUKAN clone
     $('#btn-add-peralatan').on('click', function() {
         var $tbody = $('#tbody-peralatan');
-        var $rows = $tbody.find('tr.row-peralatan');
-        var $last = $rows.last();
-        var $clone = $last.clone(true, true);
-
-        // Bersihkan semua nilai & feedback di baris baru
-        $clone.find('input').val('');
-        $clone.find('select').prop('selectedIndex', 0);
-        $clone.find('.feedback-plat-inline').empty();
-        $clone.find('.is-valid, .border-warning').removeClass('is-valid border-warning');
-
-        $tbody.append($clone);
-        reindexPeralatan();
-
+        var rowCount = $tbody.find('tr.row-peralatan').length;
+        var $newRow = $(buatBarisPeralatanBaru(rowCount));
+        $tbody.append($newRow);
         // Fokus ke field jenis_alat di baris baru
-        $clone.find('input:first').focus();
+        $newRow.find('input:first').focus();
     });
 
     // Hapus baris alat
