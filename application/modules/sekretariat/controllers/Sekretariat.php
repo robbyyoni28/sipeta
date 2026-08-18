@@ -15,6 +15,7 @@ class Sekretariat extends MX_Controller {
             $allowed_methods = [
                 'input_pemenang',
                 'input_pemenang_konsultansi',
+                'input_pemenang_non_konstruksi',
                 'simpan_pemenang',
                 'check_bulk_duplicates',
                 'edit_profil',
@@ -212,6 +213,7 @@ class Sekretariat extends MX_Controller {
     public function data_tender() {
         $data['module'] = 'sekretariat';
         $data['user'] = $this->db->get_where('users', ['username' => $this->session->userdata('username')])->row_array();
+        $data['jenis_filter'] = $this->input->get('jenis') ?: 'konstruksi';
         $this->load->view('layout/header');
         $this->load->view('data_tender', $data);
         $this->load->view('layout/footer');
@@ -266,86 +268,17 @@ class Sekretariat extends MX_Controller {
         $this->load->view('layout/footer');
     }
 
-    public function input_pemenang_konsultansi() {
+    public function input_pemenang_non_konstruksi() {
         $this->load->view('layout/header');
-        $data['jenis_tender'] = 'konsultansi';
-        // Note: Gunakan duplicate/copy dari input_pemenang, tapi hapus elemen HTML Form Peralatan
-        $this->load->view('sekretariat/input_pemenang', $data);
+        $data['jenis_tender'] = 'non_konstruksi';
+        $this->load->view('sekretariat/input_pemenang_non_konstruksi', $data);
         $this->load->view('layout/footer');
     }
 
-    public function edit_profil() {
-        $username = $this->session->userdata('username');
-        $user_data = $this->db->get_where('users', ['username' => $username])->row_array();
-        $data['user'] = $user_data;
-
-        if ($this->input->post()) {
-            $update_data = [];
-
-            // Update nama hanya jika diisi
-            $nama = $this->input->post('nama', TRUE);
-            if (!empty(trim($nama))) {
-                $update_data['nama'] = html_escape($nama);
-            }
-
-            // 1. Eksekusi Password Checking
-            if (!empty($this->input->post('password_lama'))) {
-                $pass_lama = $this->input->post('password_lama');
-                $pass_baru = $this->input->post('password_baru');
-
-                if (password_verify($pass_lama, $user_data['password'])) {
-                    $update_data['password'] = password_hash($pass_baru, PASSWORD_BCRYPT);
-                } else {
-                    $this->session->set_flashdata('error', 'Gagal: Password lama salah!');
-                    redirect('sekretariat/edit_profil');
-                    return;
-                }
-            }
-
-            // 2. Eksekusi Upload Foto CI3
-            if (!empty($_FILES['foto']['name'])) {
-                $upload_path = realpath(APPPATH . '../assets/img/profile') . DIRECTORY_SEPARATOR;
-                if (!is_dir($upload_path)) {
-                    mkdir($upload_path, 0777, true);
-                }
-
-                $config['upload_path']   = $upload_path;
-                $config['allowed_types'] = 'gif|jpg|jpeg|png';
-                $config['max_size']      = 2048; 
-                $config['encrypt_name']  = TRUE; 
-
-                $this->load->library('upload', $config);
-
-                if ($this->upload->do_upload('foto')) {
-                    $old_file = $user_data['foto'] ?? '';
-                    if ($old_file && $old_file != 'default.png' && file_exists($upload_path . $old_file)) {
-                        unlink($upload_path . $old_file);
-                    }
-                    $update_data['foto'] = $this->upload->data('file_name');
-                } else {
-                    $this->session->set_flashdata('error', $this->upload->display_errors('', ''));
-                    redirect('sekretariat/edit_profil');
-                    return;
-                }
-            }
-
-            // Jika tidak ada yang berubah, langsung redirect
-            if (empty($update_data)) {
-                $this->session->set_flashdata('error', 'Tidak ada perubahan yang disimpan.');
-                redirect('sekretariat/edit_profil');
-                return;
-            }
-
-            // 3. Proses Ke DB
-            $this->db->where('username', $username)->update('users', $update_data);
-            
-            $this->session->set_flashdata('success', 'Profil Berhasil diubah');
-            redirect('sekretariat/edit_profil');
-            return;
-        }
-
+    public function input_pemenang_konsultansi() {
         $this->load->view('layout/header');
-        $this->load->view('sekretariat/edit_profil', $data);
+        $data['jenis_tender'] = 'konsultansi';
+        $this->load->view('sekretariat/input_pemenang', $data);
         $this->load->view('layout/footer');
     }
 
@@ -353,6 +286,13 @@ class Sekretariat extends MX_Controller {
         $jenis_tender = $this->input->post('jenis_tender');
         $hps_input = $this->input->post('hps');
         $hps_val = str_replace(',', '.', str_replace('.', '', $hps_input));
+
+        $kategori_tender_val = 'KONSTRUKSI';
+        if ($jenis_tender === 'konsultansi') {
+            $kategori_tender_val = 'KONSULTANSI';
+        } else if ($jenis_tender === 'non_konstruksi') {
+            $kategori_tender_val = 'NON KONSTRUKSI';
+        }
 
         // 1. Find or Create Penyedia
         $nama_penyedia = $this->input->post('nama_penyedia');
@@ -378,15 +318,29 @@ class Sekretariat extends MX_Controller {
             'hps' => $hps_val,
             'segmentasi' => $this->input->post('kualifikasi') ?: 'Kecil',
             'is_konsultansi' => ($this->input->post('jenis_tender') == 'konsultansi' ? 1 : 0),
+            'kategori_tender' => $kategori_tender_val,
+            'jenis_pengadaan' => $this->input->post('jenis_pengadaan') ?: null,
             'tahun_anggaran' => $this->input->post('tahun_anggaran') ?: date('Y')
         ];
 
-        // Looping Bersih Personel Lapangan
+        // Looping Bersih Personel Lapangan (atau Personel Manual Non-Konstruksi)
         $personel_lapangan = [];
         $raw_lapangan = $this->input->post('personel_lapangan');
+        if (empty($raw_lapangan)) {
+            $raw_lapangan = $this->input->post('personel');
+        }
         if (!empty($raw_lapangan) && is_array($raw_lapangan)) {
             foreach ($raw_lapangan as $p) {
                 if (!empty(trim($p['nama'] ?? '')) && !empty(trim($p['nik'] ?? ''))) {
+                    if (empty($p['jenis_skk']) && !empty($p['jenis_sertifikat'])) {
+                        $p['jenis_skk'] = $p['jenis_sertifikat'];
+                    }
+                    if (empty($p['nomor_skk']) && !empty($p['nomor_sertifikat'])) {
+                        $p['nomor_skk'] = $p['nomor_sertifikat'];
+                    }
+                    if (empty($p['masa_berlaku_skk']) && !empty($p['masa_berlaku'])) {
+                        $p['masa_berlaku_skk'] = $p['masa_berlaku'];
+                    }
                     $personel_lapangan[] = $p;
                 }
             }
@@ -1418,7 +1372,8 @@ class Sekretariat extends MX_Controller {
     public function data_tender_json() {
         $penyedia_id = $this->input->get('penyedia_id');
         $tahun = $this->input->get('tahun');
-        $data = $this->Sekretariat_model->get_all_tenders($penyedia_id, $tahun);
+        $jenis = $this->input->get('jenis');
+        $data = $this->Sekretariat_model->get_all_tenders($penyedia_id, $tahun, $jenis);
         echo json_encode(['data' => $data]);
     }
 

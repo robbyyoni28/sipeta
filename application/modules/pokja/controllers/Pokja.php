@@ -234,10 +234,16 @@ class Pokja extends MX_Controller {
         $this->load->view('layout/footer');
     }
 
+    public function input_pemenang_non_konstruksi() {
+        $this->load->view('layout/header');
+        $data['jenis_tender'] = 'non_konstruksi';
+        $this->load->view('sekretariat/input_pemenang_non_konstruksi', $data);
+        $this->load->view('layout/footer');
+    }
+
     public function input_pemenang_konsultansi() {
         $this->load->view('layout/header');
         $data['jenis_tender'] = 'konsultansi';
-        // Note: Gunakan duplicate/copy dari input_pemenang, tapi hapus elemen HTML Form Peralatan
         $this->load->view('sekretariat/input_pemenang', $data);
         $this->load->view('layout/footer');
     }
@@ -250,13 +256,11 @@ class Pokja extends MX_Controller {
         if ($this->input->post()) {
             $update_data = [];
 
-            // Update nama hanya jika diisi
             $nama = $this->input->post('nama', TRUE);
             if (!empty(trim($nama))) {
                 $update_data['nama'] = html_escape($nama);
             }
 
-            // 1. Eksekusi Password Checking
             if (!empty($this->input->post('password_lama'))) {
                 $pass_lama = $this->input->post('password_lama');
                 $pass_baru = $this->input->post('password_baru');
@@ -270,20 +274,16 @@ class Pokja extends MX_Controller {
                 }
             }
 
-            // 2. Eksekusi Upload Foto CI3
             if (!empty($_FILES['foto']['name'])) {
                 $upload_path = realpath(APPPATH . '../assets/img/profile') . DIRECTORY_SEPARATOR;
                 if (!is_dir($upload_path)) {
                     mkdir($upload_path, 0777, true);
                 }
-
                 $config['upload_path']   = $upload_path;
                 $config['allowed_types'] = 'gif|jpg|jpeg|png';
-                $config['max_size']      = 2048; 
-                $config['encrypt_name']  = TRUE; 
-
+                $config['max_size']      = 2048;
+                $config['encrypt_name']  = TRUE;
                 $this->load->library('upload', $config);
-
                 if ($this->upload->do_upload('foto')) {
                     $old_file = $user_data['foto'] ?? '';
                     if ($old_file && $old_file != 'default.png' && file_exists($upload_path . $old_file)) {
@@ -303,9 +303,7 @@ class Pokja extends MX_Controller {
                 return;
             }
 
-            // 3. Proses Ke DB
             $this->db->where('username', $username)->update('users', $update_data);
-            
             $this->session->set_flashdata('success', 'Profil Berhasil diubah');
             redirect('pokja/edit_profil');
             return;
@@ -317,9 +315,9 @@ class Pokja extends MX_Controller {
     }
 
     public function get_resource_history() {
-        $id = $this->input->get('id');
+        $id   = $this->input->get('id');
         $type = $this->input->get('type');
-        
+
         $history = [];
         if ($type == 'personel_lapangan') {
             $history = $this->Sekretariat_model->get_personel_history($id);
@@ -334,29 +332,37 @@ class Pokja extends MX_Controller {
 
     public function check_bulk_duplicates() {
         $personel_lapangan = $this->input->post('personel_lapangan') ?: [];
-        $personel_k3 = $this->input->post('personel_k3') ?: [];
-        $peralatan = $this->input->post('peralatan') ?: [];
-        $personel_input = $this->input->post('personel');
+        $personel_k3       = $this->input->post('personel_k3') ?: [];
+        $peralatan         = $this->input->post('peralatan') ?: [];
+        $personel_input    = $this->input->post('personel');
         if (!empty($personel_input)) $personel_lapangan = $personel_input;
 
         $kode_tender = trim((string) $this->input->post('kode_tender'));
-        $tahun = trim((string) $this->input->post('tahun'));
-        
+        $tahun       = trim((string) $this->input->post('tahun'));
+
         $duplicates = $this->_get_bulk_duplicates_internal($personel_lapangan, $personel_k3, $peralatan, $kode_tender, $tahun);
 
         $payload = [
-            'status' => !empty($duplicates) ? 'duplicate' : 'success',
+            'status'    => !empty($duplicates) ? 'duplicate' : 'success',
             'duplicates' => $duplicates,
-            'csrfHash' => $this->security->get_csrf_hash()
+            'csrfHash'  => $this->security->get_csrf_hash()
         ];
 
         $this->output->set_content_type('application/json')->set_output(json_encode($payload));
     }
 
+
     public function simpan_pemenang() {
         $jenis_tender = $this->input->post('jenis_tender');
         $hps_input = $this->input->post('hps');
         $hps_val = str_replace(',', '.', str_replace('.', '', $hps_input));
+
+        $kategori_tender_val = 'KONSTRUKSI';
+        if ($jenis_tender === 'konsultansi') {
+            $kategori_tender_val = 'KONSULTANSI';
+        } else if ($jenis_tender === 'non_konstruksi') {
+            $kategori_tender_val = 'NON KONSTRUKSI';
+        }
 
         // 1. Find or Create Penyedia
         $nama_penyedia = $this->input->post('nama_penyedia');
@@ -382,15 +388,29 @@ class Pokja extends MX_Controller {
             'hps' => $hps_val,
             'segmentasi' => $this->input->post('kualifikasi') ?: 'Kecil',
             'is_konsultansi' => ($this->input->post('jenis_tender') == 'konsultansi' ? 1 : 0),
+            'kategori_tender' => $kategori_tender_val,
+            'jenis_pengadaan' => $this->input->post('jenis_pengadaan') ?: null,
             'tahun_anggaran' => $this->input->post('tahun_anggaran') ?: date('Y')
         ];
 
-        // Looping Bersih Personel Lapangan
+        // Looping Bersih Personel Lapangan (atau Personel Manual Non-Konstruksi)
         $personel_lapangan = [];
         $raw_lapangan = $this->input->post('personel_lapangan');
+        if (empty($raw_lapangan)) {
+            $raw_lapangan = $this->input->post('personel');
+        }
         if (!empty($raw_lapangan) && is_array($raw_lapangan)) {
             foreach ($raw_lapangan as $p) {
                 if (!empty(trim($p['nama'] ?? '')) && !empty(trim($p['nik'] ?? ''))) {
+                    if (empty($p['jenis_skk']) && !empty($p['jenis_sertifikat'])) {
+                        $p['jenis_skk'] = $p['jenis_sertifikat'];
+                    }
+                    if (empty($p['nomor_skk']) && !empty($p['nomor_sertifikat'])) {
+                        $p['nomor_skk'] = $p['nomor_sertifikat'];
+                    }
+                    if (empty($p['masa_berlaku_skk']) && !empty($p['masa_berlaku'])) {
+                        $p['masa_berlaku_skk'] = $p['masa_berlaku'];
+                    }
                     $personel_lapangan[] = $p;
                 }
             }

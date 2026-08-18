@@ -19,7 +19,15 @@
                     <tr><td width="180">Kode Tender</td><td>: <strong><?= $tender->kode_tender ?? '-' ?></strong></td></tr>
                     <tr><td>Satuan Kerja</td><td>: <?= $tender->satuan_kerja ?? '-' ?></td></tr>
                     <tr><td>Sifat / Segmentasi</td><td>: <span class="badge badge-light border"><?= $tender->segmentasi ?? '-' ?></span></td></tr>
-                    <tr><td>Jenis Pengadaan</td><td>: <span class="badge badge-primary"><?= (isset($tender->is_konsultansi) && $tender->is_konsultansi == 1) ? 'Jasa Konsultansi' : 'Pekerjaan Konstruksi' ?></span></td></tr>
+                    <tr><td>Jenis Pengadaan</td><td>: <span class="badge badge-primary"><?php 
+                        if (isset($tender->kategori_tender) && $tender->kategori_tender == 'NON KONSTRUKSI') {
+                            echo 'Non-Konstruksi (' . ($tender->jenis_pengadaan ?? 'Jasa Lainnya') . ')';
+                        } else if (isset($tender->is_konsultansi) && $tender->is_konsultansi == 1) {
+                            echo 'Jasa Konsultansi';
+                        } else {
+                            echo 'Pekerjaan Konstruksi';
+                        }
+                    ?></span></td></tr>
                 </table>
             </div>
             <div class="col-md-6 border-left">
@@ -130,7 +138,7 @@
                 <?php else: ?>
                     <?php foreach($personel_lapangan as $pl): ?>
                     <div class="mb-4 border-bottom pb-3">
-                        <h5 class="text-primary font-weight-bold"><?= $pl->nama ?? '' ?> <small class="text-muted">(Pelaksana Lapangan)</small></h5>
+                        <h5 class="text-primary font-weight-bold"><?= $pl->nama ?? '' ?> <small class="text-muted">(<?= !empty($pl->jabatan) ? $pl->jabatan : 'Pelaksana Lapangan' ?>)</small></h5>
                         <p class="mb-1 small">NIK: <?= $pl->nik ?? '' ?> | No SKK: <?= $pl->nomor_skk ?? '-' ?> | Masa Berlaku: <?= $pl->masa_berlaku_skk ?? '-' ?></p>
                          <div class="mt-2">
                            <?php if(!empty($pl->file_ktp)) echo "<a href='".base_url('uploads/dokumen/'.$pl->file_ktp)."' class='badge badge-info py-1 px-2 mr-2' target='_blank'><i class='fas fa-id-card'></i> Dokumen KTP</a>"; ?>

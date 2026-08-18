@@ -56,8 +56,18 @@
     }
 </style>
 
+<?php
+    $title_jenis = 'Konstruksi';
+    if (isset($jenis_filter)) {
+        if ($jenis_filter == 'non_konstruksi' || $jenis_filter == 'non-konstruksi') {
+            $title_jenis = 'Non-Konstruksi';
+        } else if ($jenis_filter == 'konsultansi') {
+            $title_jenis = 'Konsultansi';
+        }
+    }
+?>
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-file-invoice-dollar mr-3 text-primary"></i>Monitoring Data Tender <?= isset($jenis_filter) && $jenis_filter == 'konsultansi' ? 'Konsultansi' : 'Konstruksi' ?></h1>
+    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-file-invoice-dollar mr-3 text-primary"></i>Monitoring Data Tender <?= $title_jenis ?></h1>
 </div>
 
 <!-- Premium Filter Section -->
@@ -198,7 +208,7 @@ $(document).ready(function() {
                 "className": "text-center",
                 "render": function(data) {
                     return `
-                        <a href="<?= base_url('pokja/detail/') ?>${data}" class="btn btn-sm btn-light font-weight-bold" style="border-radius: 8px; border: 1px solid #e2e8f0; color: #4361ee;">
+                        <a href="<?= base_url($module.'/detail/') ?>${data}" class="btn btn-sm btn-light font-weight-bold" style="border-radius: 8px; border: 1px solid #e2e8f0; color: #4361ee;">
                             <i class="fas fa-search-plus mr-1"></i> Detail
                         </a>`;
                 }

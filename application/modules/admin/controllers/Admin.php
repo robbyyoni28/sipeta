@@ -657,6 +657,15 @@ class Admin extends MX_Controller {
         $this->load->view('layout/footer');
     }
 
+    public function input_pemenang_non_konstruksi() {
+        $this->load->model('sekretariat/Sekretariat_model');
+        $data['companies'] = $this->Sekretariat_model->get_all_companies();
+        $data['jenis_tender'] = 'non_konstruksi';
+        $this->load->view('layout/header');
+        $this->load->view('sekretariat/input_pemenang_non_konstruksi', $data);
+        $this->load->view('layout/footer');
+    }
+
     public function input_pemenang_konsultansi() {
         $this->load->view('layout/header');
         $data['jenis_tender'] = 'konsultansi';
@@ -677,6 +686,13 @@ class Admin extends MX_Controller {
         $jenis_tender = $this->input->post('jenis_tender');
         $hps_input = $this->input->post('hps');
         $hps_val = str_replace(',', '.', str_replace('.', '', $hps_input));
+
+        $kategori_tender_val = 'KONSTRUKSI';
+        if ($jenis_tender === 'konsultansi') {
+            $kategori_tender_val = 'KONSULTANSI';
+        } else if ($jenis_tender === 'non_konstruksi') {
+            $kategori_tender_val = 'NON KONSTRUKSI';
+        }
 
         // 1. Find or Create Penyedia
         $nama_penyedia = $this->input->post('nama_penyedia');
@@ -702,15 +718,29 @@ class Admin extends MX_Controller {
             'hps' => $hps_val,
             'segmentasi' => $this->input->post('kualifikasi') ?: 'Kecil',
             'is_konsultansi' => ($this->input->post('jenis_tender') == 'konsultansi' ? 1 : 0),
+            'kategori_tender' => $kategori_tender_val,
+            'jenis_pengadaan' => $this->input->post('jenis_pengadaan') ?: null,
             'tahun_anggaran' => $this->input->post('tahun_anggaran') ?: date('Y')
         ];
 
-        // Looping Bersih Personel Lapangan
+        // Looping Bersih Personel Lapangan (atau Personel Manual Non-Konstruksi)
         $personel_lapangan = [];
         $raw_lapangan = $this->input->post('personel_lapangan');
+        if (empty($raw_lapangan)) {
+            $raw_lapangan = $this->input->post('personel');
+        }
         if (!empty($raw_lapangan) && is_array($raw_lapangan)) {
             foreach ($raw_lapangan as $p) {
                 if (!empty(trim($p['nama'] ?? '')) && !empty(trim($p['nik'] ?? ''))) {
+                    if (empty($p['jenis_skk']) && !empty($p['jenis_sertifikat'])) {
+                        $p['jenis_skk'] = $p['jenis_sertifikat'];
+                    }
+                    if (empty($p['nomor_skk']) && !empty($p['nomor_sertifikat'])) {
+                        $p['nomor_skk'] = $p['nomor_sertifikat'];
+                    }
+                    if (empty($p['masa_berlaku_skk']) && !empty($p['masa_berlaku'])) {
+                        $p['masa_berlaku_skk'] = $p['masa_berlaku'];
+                    }
                     $personel_lapangan[] = $p;
                 }
             }
@@ -1128,7 +1158,8 @@ class Admin extends MX_Controller {
         $this->load->model('sekretariat/Sekretariat_model');
         $penyedia_id = $this->input->get('penyedia_id');
         $tahun = $this->input->get('tahun');
-        $data = $this->Sekretariat_model->get_all_tenders($penyedia_id, $tahun);
+        $jenis = $this->input->get('jenis');
+        $data = $this->Sekretariat_model->get_all_tenders($penyedia_id, $tahun, $jenis);
         echo json_encode(['data' => $data]);
     }
 

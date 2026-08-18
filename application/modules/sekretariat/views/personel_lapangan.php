@@ -230,10 +230,20 @@ $(document).ready(function() {
                 }
             },
             { 
-                "data": "pengalaman_tahun", 
+                "data": "masa_berlaku_skk", 
                 "className": "text-center",
                 "render": function(data) {
-                    return data ? `${data} Tahun` : '-';
+                    if (!data || data === '0000-00-00' || data === null) return '<span class="text-muted">-</span>';
+                    let parts = data.split('-');
+                    if (parts.length !== 3) return '<span class="text-muted">-</span>';
+                    let formatted = parts[2] + '/' + parts[1] + '/' + parts[0];
+                    // Cek apakah sudah kadaluarsa
+                    let today = new Date();
+                    let expired = new Date(data);
+                    if (expired < today) {
+                        return `<span class="badge badge-danger px-2 py-1" style="border-radius:6px;">${formatted}</span>`;
+                    }
+                    return `<span class="font-weight-bold text-success">${formatted}</span>`;
                 }
             },
             {

@@ -457,9 +457,92 @@
         .card .dataTables_wrapper .dataTables_length select {
             border-radius: 12px;
         }
+        /* SIDEBAR SUBMENU COLLAPSIBLE SYSTEM */
+        .sidebar-group {
+            margin-bottom: 4px;
+        }
+        .sidebar-group-header {
+            padding: 12px 18px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none !important;
+        }
+        .sidebar-group-header:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .sidebar-group-header.active-group {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+        }
+        .sidebar-group-header .chevron-icon {
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-group-header[aria-expanded="true"] .chevron-icon {
+            transform: rotate(90deg);
+        }
+        .sidebar-submenu {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .sidebar-submenu li a {
+            padding: 10px 16px 10px 34px !important;
+            margin: 3px 12px !important;
+            border-radius: 10px !important;
+            font-size: 0.88rem !important;
+            min-height: 40px !important;
+            color: #94a3b8 !important;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            text-decoration: none !important;
+        }
+        .sidebar-submenu li a:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            transform: translateX(4px);
+        }
+        .sidebar-submenu li.active > a {
+            color: #fff !important;
+            background: var(--sidebar-active) !important;
+            font-weight: 600;
+        }
+
+        #wrapper.sidebar-collapsed .sidebar-group-header span,
+        #wrapper.sidebar-collapsed .sidebar-group-header .chevron-icon {
+            display: none;
+        }
+        #wrapper.sidebar-collapsed .sidebar-submenu li a span,
+        #wrapper.sidebar-collapsed .sidebar-submenu li a .menu-text {
+            display: none;
+        }
+        #wrapper.sidebar-collapsed .sidebar-submenu li a {
+            padding: 12px !important;
+            justify-content: center;
+        }
     </style>
 </head>
-<?php $module = $this->uri->segment(1); ?>
+<?php 
+    $module = $this->uri->segment(1); 
+    $seg2 = $this->uri->segment(2);
+    $jenis_get = $this->input->get('jenis');
+
+    $is_tender_active = in_array($seg2, ['input_pemenang', 'input_pemenang_konsultansi', 'input_pemenang_non_konstruksi']);
+    $is_teknis_active = in_array($seg2, ['manajer_teknik', 'manajer_keuangan', 'personel_lapangan', 'personel_k3', 'peralatan', 'pemilik_alat']);
+    $is_monitoring_active = in_array($seg2, ['data_tender', 'detail', 'pemeriksaan', 'detail_non_konstruksi']);
+    $is_master_active = in_array($seg2, ['daftar_perusahaan', 'manage']);
+?>
 <body>
     <div id="wrapper">
         <nav id="sidebar">
@@ -469,43 +552,94 @@
                 </div>
             </div>
 
-            <ul class="list-unstyled components mt-3">
-                <li class="<?= $this->uri->segment(2) == 'input_pemenang' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/input_pemenang') ?>"><i class="far fa-star mr-2"></i> TENDER KONSTRUKSI</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> TENDER KONSULTANSI</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'manajer_teknik' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/manajer_teknik') ?>"><i class="fas fa-user-cog mr-2"></i> MANAJER TEKNIK</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'manajer_keuangan' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i> MANAJER KEUANGAN</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'personel_lapangan' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i> PELAKSANA LAPANGAN</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'personel_k3' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/personel_k3') ?>"><i class="fas fa-briefcase-medical mr-2"></i> PERSONEL K3</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'peralatan' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/peralatan') ?>"><i class="fas fa-truck-pickup mr-2"></i> PERALATAN</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'pemilik_alat' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/pemilik_alat') ?>"><i class="fas fa-truck mr-2"></i> PEMILIK ALAT</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'data_tender' && $this->input->get('jenis') != 'konsultansi' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/data_tender?jenis=konstruksi') ?>"><i class="fas fa-file-contract mr-2"></i> MONITORING KONSTRUKSI</a>
-                </li>
-                <li class="<?= $this->uri->segment(2) == 'data_tender' && $this->input->get('jenis') == 'konsultansi' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/data_tender?jenis=konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> DETAIL TENDER KONSULTANSI</a>
-                </li>
+            <div class="sidebar-menu-wrapper mt-3 mb-4">
+                <!-- GROUP 1: TENDER -->
+                <div class="sidebar-group">
+                    <a class="sidebar-group-header <?= $is_tender_active ? 'active-group' : 'collapsed' ?>" data-toggle="collapse" href="#groupTender" role="button" aria-expanded="<?= $is_tender_active ? 'true' : 'false' ?>" aria-controls="groupTender">
+                        <span><i class="fas fa-folder-open mr-2"></i> TENDER</span>
+                        <i class="fas fa-chevron-right chevron-icon"></i>
+                    </a>
+                    <div class="collapse <?= $is_tender_active ? 'show' : '' ?>" id="groupTender">
+                        <ul class="list-unstyled sidebar-submenu">
+                            <li class="<?= $seg2 == 'input_pemenang' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/input_pemenang') ?>"><i class="far fa-star mr-2"></i> <span class="menu-text">Tender Konstruksi</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'input_pemenang_konsultansi' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/input_pemenang_konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> <span class="menu-text">Tender Konsultansi</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'input_pemenang_non_konstruksi' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/input_pemenang_non_konstruksi') ?>"><i class="fas fa-boxes mr-2"></i> <span class="menu-text">Tender Non Konstruksi</span></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
 
-                <li class="<?= $this->uri->segment(2) == 'daftar_perusahaan' || $this->uri->segment(2) == 'manage' ? 'active' : '' ?>">
-                    <a href="<?= base_url($module.'/daftar_perusahaan') ?>"><i class="fas fa-address-card mr-2"></i> DATA PERUSAHAAN</a>
-                </li>
-                <!-- Menu REGULASI sementara dinonaktifkan -->
-            </ul>
+                <!-- GROUP 2: DATA TEKNIS -->
+                <div class="sidebar-group">
+                    <a class="sidebar-group-header <?= $is_teknis_active ? 'active-group' : 'collapsed' ?>" data-toggle="collapse" href="#groupTeknis" role="button" aria-expanded="<?= $is_teknis_active ? 'true' : 'false' ?>" aria-controls="groupTeknis">
+                        <span><i class="fas fa-cogs mr-2"></i> DATA TEKNIS</span>
+                        <i class="fas fa-chevron-right chevron-icon"></i>
+                    </a>
+                    <div class="collapse <?= $is_teknis_active ? 'show' : '' ?>" id="groupTeknis">
+                        <ul class="list-unstyled sidebar-submenu">
+                            <li class="<?= $seg2 == 'manajer_teknik' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/manajer_teknik') ?>"><i class="fas fa-user-cog mr-2"></i> <span class="menu-text">Manajer Teknik</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'manajer_keuangan' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/manajer_keuangan') ?>"><i class="fas fa-user-tie mr-2"></i> <span class="menu-text">Manajer Keuangan</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'personel_lapangan' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/personel_lapangan') ?>"><i class="fas fa-users mr-2"></i> <span class="menu-text">Pelaksana Lapangan</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'personel_k3' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/personel_k3') ?>"><i class="fas fa-briefcase-medical mr-2"></i> <span class="menu-text">Personel K3</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'peralatan' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/peralatan') ?>"><i class="fas fa-truck-pickup mr-2"></i> <span class="menu-text">Peralatan</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'pemilik_alat' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/pemilik_alat') ?>"><i class="fas fa-truck mr-2"></i> <span class="menu-text">Pemilik Alat</span></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GROUP 3: MONITORING -->
+                <div class="sidebar-group">
+                    <a class="sidebar-group-header <?= $is_monitoring_active ? 'active-group' : 'collapsed' ?>" data-toggle="collapse" href="#groupMonitoring" role="button" aria-expanded="<?= $is_monitoring_active ? 'true' : 'false' ?>" aria-controls="groupMonitoring">
+                        <span><i class="fas fa-chart-line mr-2"></i> MONITORING</span>
+                        <i class="fas fa-chevron-right chevron-icon"></i>
+                    </a>
+                    <div class="collapse <?= $is_monitoring_active ? 'show' : '' ?>" id="groupMonitoring">
+                        <ul class="list-unstyled sidebar-submenu">
+                            <li class="<?= ($seg2 == 'data_tender' || $seg2 == 'pemeriksaan') && ($jenis_get == 'konstruksi' || !$jenis_get) ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/data_tender?jenis=konstruksi') ?>"><i class="fas fa-file-contract mr-2"></i> <span class="menu-text">Monitoring Konstruksi</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'data_tender' && $jenis_get == 'konsultansi' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/data_tender?jenis=konsultansi') ?>"><i class="fas fa-handshake mr-2"></i> <span class="menu-text">Detail Tender Konsultansi</span></a>
+                            </li>
+                            <li class="<?= $seg2 == 'data_tender' && $jenis_get == 'non_konstruksi' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/data_tender?jenis=non_konstruksi') ?>"><i class="fas fa-layer-group mr-2"></i> <span class="menu-text">Monitoring Non Konstruksi</span></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GROUP 4: MASTER DATA -->
+                <div class="sidebar-group">
+                    <a class="sidebar-group-header <?= $is_master_active ? 'active-group' : 'collapsed' ?>" data-toggle="collapse" href="#groupMaster" role="button" aria-expanded="<?= $is_master_active ? 'true' : 'false' ?>" aria-controls="groupMaster">
+                        <span><i class="fas fa-database mr-2"></i> MASTER DATA</span>
+                        <i class="fas fa-chevron-right chevron-icon"></i>
+                    </a>
+                    <div class="collapse <?= $is_master_active ? 'show' : '' ?>" id="groupMaster">
+                        <ul class="list-unstyled sidebar-submenu">
+                            <li class="<?= $seg2 == 'daftar_perusahaan' || $seg2 == 'manage' ? 'active' : '' ?>">
+                                <a href="<?= base_url($module.'/daftar_perusahaan') ?>"><i class="fas fa-address-card mr-2"></i> <span class="menu-text">Data Perusahaan</span></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
             <div class="mt-auto p-4">
                 <a href="<?= base_url('auth/logout') ?>" class="btn btn-outline-info btn-block btn-sm rounded-pill">

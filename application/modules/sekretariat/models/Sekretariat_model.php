@@ -313,8 +313,29 @@ class Sekretariat_model extends CI_Model
         return $this->db->trans_status();
     }
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ensure_non_konstruksi_schema();
+    }
+
+    public function ensure_non_konstruksi_schema()
+    {
+        if ($this->db->table_exists('tender') && !$this->db->field_exists('kategori_tender', 'tender')) {
+            $this->load->dbforge();
+            $fields = [
+                'kategori_tender' => ['type' => 'VARCHAR', 'constraint' => '50', 'default' => 'KONSTRUKSI'],
+                'jenis_pengadaan' => ['type' => 'VARCHAR', 'constraint' => '100', 'null' => TRUE]
+            ];
+            $this->dbforge->add_column('tender', $fields);
+            $this->db->query("UPDATE tender SET kategori_tender = 'KONSULTANSI' WHERE is_konsultansi = 1");
+            $this->db->query("UPDATE tender SET kategori_tender = 'KONSTRUKSI' WHERE (is_konsultansi = 0 OR is_konsultansi IS NULL) AND (kategori_tender IS NULL OR kategori_tender = '' OR kategori_tender = 'KONSTRUKSI')");
+        }
+    }
+
     public function get_all_tenders($penyedia_id = null, $tahun = null, $jenis_tender = null)
     {
+        $this->ensure_non_konstruksi_schema();
         $this->db->select('tender.*, tender.satuan_kerja as nama_tender, penyedia.nama_perusahaan, u.role as created_role,
                           (SELECT COUNT(*) FROM tender_personel_lapangan WHERE tender_id = tender.id) as jumlah_personel,
                           (SELECT COUNT(*) FROM tender_peralatan WHERE tender_id = tender.id) as jumlah_alat');
@@ -329,10 +350,21 @@ class Sekretariat_model extends CI_Model
             $this->db->where('tender.tahun_anggaran', $tahun);
         }
         if ($jenis_tender) {
-            if ($jenis_tender == 'konsultansi') {
-                $this->db->where('is_konsultansi', 1);
-            } else {
-                $this->db->where('is_konsultansi', 0);
+            if ($jenis_tender == 'non_konstruksi' || $jenis_tender == 'non-konstruksi') {
+                $this->db->where('tender.kategori_tender', 'NON KONSTRUKSI');
+            } else if ($jenis_tender == 'konsultansi') {
+                $this->db->group_start()
+                         ->where('tender.kategori_tender', 'KONSULTANSI')
+                         ->or_where('tender.is_konsultansi', 1)
+                         ->group_end();
+            } else { // konstruksi
+                $this->db->group_start()
+                         ->where('tender.kategori_tender', 'KONSTRUKSI')
+                         ->or_group_start()
+                            ->where('tender.is_konsultansi', 0)
+                            ->where('(tender.kategori_tender IS NULL OR tender.kategori_tender = "")')
+                         ->group_end()
+                         ->group_end();
             }
         }
 
